@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HemaCore — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --blood:#c0152a; --blood-dark:#8a0e1e;
+  --bg:#0a0a0b; --bg2:#111114; --bg3:#18181d;
+  --border:rgba(192,21,42,0.18); --border-hi:rgba(192,21,42,0.45);
+  --text:#f0eae8; --text-muted:#8a7f7d; --text-dim:#4a4045;
+  --green:#1db877; --amber:#e8a020;
+  --radius:12px; --radius-lg:20px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+#login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:100;transition:opacity .5s,transform .5s}
+#login-screen.hidden{opacity:0;pointer-events:none;transform:scale(1.04)}
+.login-wrap{display:flex;width:820px;max-width:95vw;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border-hi);box-shadow:0 40px 120px rgba(0,0,0,0.6)}
+.login-art{width:340px;flex-shrink:0;background:var(--blood-dark);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:40px}
+.login-art::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#8a0e1e 0%,#3d0009 100%)}
+.login-art-circles{position:absolute;inset:0;pointer-events:none}
+.circle{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,0.08)}
+.c1{width:280px;height:280px;top:-80px;right:-80px}
+.c2{width:180px;height:180px;top:60px;right:-20px;border-color:rgba(255,255,255,0.05)}
+.c3{width:400px;height:400px;bottom:-200px;left:-100px;border-color:rgba(255,255,255,0.04)}
+.login-art-tag{position:relative;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:12px}
+.login-art h2{position:relative;font-family:'DM Serif Display',serif;font-size:32px;font-weight:400;color:#fff;line-height:1.2;margin-bottom:16px}
+.login-art p{position:relative;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6}
+.drop-big{position:absolute;top:40px;left:40px;width:60px;height:60px;background:rgba(255,255,255,0.1);border-radius:50% 50% 50% 0;transform:rotate(-45deg);backdrop-filter:blur(10px)}
+.login-form-side{flex:1;background:var(--bg2);padding:48px 44px}
+.login-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(192,21,42,0.12);border:1px solid rgba(192,21,42,0.25);border-radius:99px;padding:5px 14px;font-size:11px;font-weight:600;color:var(--blood);letter-spacing:.08em;text-transform:uppercase;margin-bottom:28px}
+.login-form-side h3{font-family:'DM Serif Display',serif;font-size:26px;font-weight:400;margin-bottom:6px}
+.login-form-side p{font-size:13px;color:var(--text-muted);margin-bottom:32px}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.field input{width:100%;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Outfit',sans-serif;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus{border-color:var(--blood);box-shadow:0 0 0 3px rgba(192,21,42,0.12)}
+.btn-login{width:100%;padding:14px;background:var(--blood);border:none;border-radius:var(--radius);color:#fff;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s,box-shadow .2s;margin-top:4px}
+.btn-login:hover{background:#d41830;box-shadow:0 6px 28px rgba(192,21,42,0.4)}
+.login-footer{margin-top:20px;text-align:center;font-size:12px;color:var(--text-dim)}
+.login-footer a{color:var(--text-muted);text-decoration:none;transition:color .15s}
+.login-footer a:hover{color:var(--blood)}
+.login-error{background:rgba(192,21,42,0.1);border:1px solid rgba(192,21,42,0.25);border-radius:8px;padding:10px 14px;font-size:13px;color:#ff6b7a;margin-top:14px;display:none}
+#app{display:flex;min-height:100vh;opacity:0;transition:opacity .5s}
+#app.visible{opacity:1}
+.sidebar{width:240px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 0;position:sticky;top:0;height:100vh}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:0 24px 28px;border-bottom:1px solid var(--border)}
+.logo-drop{width:34px;height:34px;background:var(--blood);border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(192,21,42,0.4)}
+.logo-drop svg{transform:rotate(45deg)}
+.sidebar-logo span{font-family:'DM Serif Display',serif;font-size:20px}
+.sidebar-logo span em{color:var(--blood);font-style:normal}
+nav{flex:1;padding:20px 12px}
+.nav-section{font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;padding:0 12px;margin:20px 0 8px}
+.nav-section:first-child{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--text-muted);font-size:14px;font-weight:500;cursor:pointer;transition:background .15s,color .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:'Outfit',sans-serif}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+.nav-item.active{background:rgba(192,21,42,0.15);color:var(--blood)}
+.sidebar-footer{padding:20px 24px 0;border-top:1px solid var(--border)}
+.user-chip{display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:var(--blood-dark);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:11px;color:var(--blood);text-transform:capitalize;font-weight:600}
+.logout-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;border-radius:6px;transition:color .15s;display:flex}
+.logout-btn:hover{color:var(--blood)}
+.main{flex:1;overflow-y:auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:28px 36px 0;margin-bottom:32px}
+.topbar h1{font-family:'DM Serif Display',serif;font-size:30px;font-weight:400}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.page{display:none;padding:0 36px 40px;animation:fadeUp .3s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 24px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+.stat-card:hover{border-color:var(--border-hi);transform:translateY(-2px)}
+.accent-line{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:99px 0 0 99px}
+.red .accent-line{background:var(--blood)}.green .accent-line{background:var(--green)}.amber .accent-line{background:var(--amber)}.blue .accent-line{background:#3b82f6}
+.stat-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.stat-value{font-family:'DM Mono',monospace;font-size:32px;font-weight:500;line-height:1;margin-bottom:6px}
+.stat-sub{font-size:12px;color:var(--text-muted)}
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:24px}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border)}
+.table-title{font-size:15px;font-weight:600}.table-meta{font-size:12px;color:var(--text-muted)}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border)}
+th{padding:12px 24px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+td{padding:14px 24px;font-size:14px;border-bottom:1px solid rgba(255,255,255,0.04)}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:rgba(255,255,255,0.03)}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-blood{background:rgba(192,21,42,0.2);color:#ff6b7a;border:1px solid rgba(192,21,42,0.3)}
+.badge-pending{background:rgba(232,160,32,0.15);color:#e8a020;border:1px solid rgba(232,160,32,0.3)}
+.badge-approved{background:rgba(29,184,119,0.15);color:#1db877;border:1px solid rgba(29,184,119,0.3)}
+.badge-fulfilled{background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3)}
+.badge-rejected{background:rgba(192,21,42,0.15);color:#ff6b7a;border:1px solid rgba(192,21,42,0.3)}
+.badge-completed{background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3)}
+.inventory-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.inv-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;text-align:center;transition:all .2s;position:relative;overflow:hidden}
+.inv-card:hover{border-color:var(--border-hi);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.blood-type-label{font-family:'DM Serif Display',serif;font-size:36px;color:var(--blood);line-height:1;margin-bottom:8px}
+.inv-units{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;margin-bottom:4px}
+.inv-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+.inv-bar{height:4px;background:var(--bg3);border-radius:2px;margin-top:16px;overflow:hidden}
+.inv-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.inv-bar-fill.ok{background:var(--green)}.inv-bar-fill.low{background:var(--amber)}.inv-bar-fill.critical{background:var(--blood)}
+.btn-sm{display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:none;font-family:'Outfit',sans-serif}
+.btn-red{background:var(--blood);color:#fff}.btn-red:hover{background:#d41830;box-shadow:0 4px 16px rgba(192,21,42,.35)}
+.action-btn{background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s;margin-right:4px}
+.action-btn:hover{border-color:var(--border-hi);color:var(--text)}
+.action-btn.danger:hover{border-color:var(--blood);color:var(--blood)}
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;transition:border-color .2s}
+.search-bar:focus-within{border-color:var(--border-hi)}
+.search-bar input{background:none;border:none;outline:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;width:200px;padding:0}
+.search-bar input::placeholder{color:var(--text-dim)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--radius-lg);padding:36px;width:480px;max-width:95vw;transform:scale(.95) translateY(10px);transition:transform .25s}
+.modal-overlay.open .modal{transform:scale(1) translateY(0)}
+.modal h3{font-family:'DM Serif Display',serif;font-size:22px;font-weight:400;margin-bottom:6px}
+.modal p{font-size:13px;color:var(--text-muted);margin-bottom:26px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.modal-grid .full{grid-column:1/-1}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
+.select-field{width:100%;padding:11px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.select-field:focus{border-color:var(--blood);box-shadow:0 0 0 3px rgba(192,21,42,.1)}
+.btn-ghost{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:var(--text-muted);border:1px solid var(--border);font-family:'Outfit',sans-serif;transition:all .15s}
+.btn-ghost:hover{color:var(--text);border-color:var(--border-hi)}
+.btn-submit{padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--blood);color:#fff;border:none;font-family:'Outfit',sans-serif;transition:background .2s}
+.btn-submit:hover{background:#d41830}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.empty-state p{font-size:14px}
+#toast{position:fixed;bottom:28px;right:28px;background:var(--bg2);border:1px solid var(--border-hi);border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:12px;font-size:14px;z-index:200;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);max-width:320px}
+#toast.show{transform:translateY(0);opacity:1}
+.toast-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+#toast.success .toast-dot{background:var(--green)}
+#toast.error .toast-dot{background:var(--blood)}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-art">
+      <div class="login-art-circles">
+        <div class="circle c1"></div><div class="circle c2"></div><div class="circle c3"></div>
+      </div>
+      <div class="drop-big"></div>
+      <div class="login-art-tag">Blood Bank System</div>
+      <h2>Manage. Monitor. Save Lives.</h2>
+      <p>Full administrative access to donors, inventory, and blood requests across your network.</p>
+    </div>
+    <div class="login-form-side">
+      <div class="login-badge">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg>
+        Admin Portal
+      </div>
+      <h3>Administrator Login</h3>
+      <p>Sign in with your admin credentials to access the full dashboard.</p>
+      <div class="field"><label>Email Address</label><input type="email" id="login-email" placeholder="admin@hospital.com"/></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"/></div>
+      <button class="btn-login" onclick="doLogin()">Sign in as Admin</button>
+      <div class="login-error" id="login-error">Invalid credentials or insufficient permissions.</div>
+      <div class="login-footer">Not an admin? <a href="user.html">Go to User Portal →</a></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><div class="toast-dot"></div><span id="toast-msg"></span></div>
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-drop"><svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M12 2C12 2 5 10.5 5 15a7 7 0 0014 0C19 10.5 12 2 12 2z"/></svg></div>
+      <span>Hema<em>Core</em></span>
+    </div>
+    <nav>
+      <div class="nav-section">Overview</div>
+      <button class="nav-item active" onclick="showPage('dashboard',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+      <div class="nav-section">Management</div>
+      <button class="nav-item" onclick="showPage('donors',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Donors
+      </button>
+      <button class="nav-item" onclick="showPage('inventory',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C12 2 5 10.5 5 15a7 7 0 0014 0C19 10.5 12 2 12 2z"/></svg>
+        Inventory
+      </button>
+      <button class="nav-item" onclick="showPage('requests',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+        Requests
+      </button>
+      <button class="nav-item" onclick="showPage('donations',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        Donation Offers
+        <span id="donation-badge" style="display:none;margin-left:auto;background:var(--blood);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:2px 7px"></span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">Admin</div>
+          <div class="user-role">Admin</div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()" title="Logout">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1 id="page-title">Dashboard</h1>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card red"><div class="accent-line"></div><div class="stat-label">Total Donors</div><div class="stat-value" id="stat-donors">—</div><div class="stat-sub">Registered donors</div></div>
+        <div class="stat-card green"><div class="accent-line"></div><div class="stat-label">Total Units</div><div class="stat-value" id="stat-units">—</div><div class="stat-sub">In inventory</div></div>
+        <div class="stat-card amber"><div class="accent-line"></div><div class="stat-label">Pending</div><div class="stat-value" id="stat-pending">—</div><div class="stat-sub">Awaiting approval</div></div>
+        <div class="stat-card blue"><div class="accent-line"></div><div class="stat-label">Fulfilled</div><div class="stat-value" id="stat-fulfilled">—</div><div class="stat-sub">Completed requests</div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Recent Requests</span><span class="table-meta" id="recent-meta"></span></div>
+        <table><thead><tr><th>Patient</th><th>Blood Type</th><th>Units</th><th>Hospital</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="recent-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- DONORS -->
+    <div class="page" id="page-donors">
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">All Donors</span>
+          <div class="search-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" placeholder="Search donors…" oninput="filterDonors(this.value)"/></div>
+        </div>
+        <table><thead><tr><th>Name</th><th>Blood Type</th><th>Phone</th><th>Last Donation</th><th>Actions</th></tr></thead>
+        <tbody id="donors-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="page" id="page-inventory">
+      <div class="inventory-grid" id="inventory-grid"></div>
+    </div>
+
+    <!-- REQUESTS -->
+    <div class="page" id="page-requests">
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">All Blood Requests</span>
+          <select class="select-field" style="width:140px;padding:7px 12px;font-size:13px" onchange="filterRequests(this.value)">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="fulfilled">Fulfilled</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <table><thead><tr><th>Patient</th><th>Blood Type</th><th>Units</th><th>Hospital</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="requests-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- DONATIONS -->
+    <div class="page" id="page-donations">
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">Donation Offers</span>
+          <select class="select-field" style="width:160px;padding:7px 12px;font-size:13px" onchange="filterDonations(this.value)">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="completed">Completed</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <table><thead><tr><th>Donor</th><th>Blood Type</th><th>Units</th><th>Date & Time</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="donations-body"></tbody></table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-donor">
+  <div class="modal">
+    <h3>Register Donor</h3><p>Add a new blood donor to the system</p>
+    <div class="modal-grid">
+      <div class="field full"><label>Full Name</label><input type="text" id="d-name" placeholder="John Doe"/></div>
+      <div class="field"><label>Blood Type</label><select class="select-field" id="d-blood"><option value="">Select…</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+      <div class="field"><label>Phone</label><input type="text" id="d-phone" placeholder="+91 98765 43210"/></div>
+      <div class="field"><label>Email</label><input type="email" id="d-email" placeholder="optional"/></div>
+      <div class="field"><label>Date of Birth</label><input type="date" id="d-dob"/></div>
+      <div class="field full"><label>Address</label><input type="text" id="d-address" placeholder="optional"/></div>
+      <div class="field full"><label>Last Donation Date</label><input type="date" id="d-lastdon"/></div>
+    </div>
+    <div class="modal-footer"><button class="btn-ghost" onclick="closeModal('modal-donor')">Cancel</button><button class="btn-submit" onclick="submitDonor()">Register</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-inventory">
+  <div class="modal">
+    <h3>Update Inventory</h3><p>Add or deduct blood units from stock</p>
+    <div class="modal-grid">
+      <div class="field"><label>Blood Type</label><select class="select-field" id="i-blood"><option value="">Select…</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+      <div class="field"><label>Units</label><input type="number" id="i-units" placeholder="10" min="1"/></div>
+      <div class="field full"><label>Operation</label><select class="select-field" id="i-op"><option value="add">Add units (donation received)</option><option value="deduct">Deduct units (used/expired)</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn-ghost" onclick="closeModal('modal-inventory')">Cancel</button><button class="btn-submit" onclick="submitInventory()">Update Stock</button></div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
