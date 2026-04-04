@@ -31,6 +31,7 @@ async function doLogin() {
       method: 'POST', body: JSON.stringify({ email, password })
     });
     token = data.access_token;
+    localStorage.setItem('token', token);
     const me = await apiFetch('/auth/me');
     enterApp(me);
   } catch (e) {
@@ -80,6 +81,7 @@ async function doSignup() {
       method: 'POST', body: JSON.stringify({ email, password })
     });
     token = loginData.access_token;
+    localStorage.setItem('token', token);
 
     try {
       await apiFetch('/donors/', {
@@ -127,6 +129,7 @@ function enterApp(me, bloodType = null) {
 
 function doLogout() {
   token = '';
+  localStorage.removeItem('token');
   currentUserId = null;
   document.getElementById('auth-screen').classList.remove('hidden');
   document.getElementById('app').classList.remove('visible');
@@ -136,6 +139,19 @@ function doLogout() {
 
 document.getElementById('login-password').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
+});
+
+// ── AUTO RESTORE SESSION ──────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (token) {
+    try {
+      const me = await apiFetch('/auth/me');
+      enterApp(me);
+    } catch {
+      localStorage.removeItem('token');
+      token = '';
+    }
+  }
 });
 
 // ── PAGE NAV ──────────────────────────────────────────
@@ -215,9 +231,7 @@ async function loadMyDonations() {
     const all = await apiFetch('/donations/');
     myDonations = all.filter(d => d.user_id == currentUserId);
     renderDonations();
-  } catch (e) {
-    // donations endpoint may not exist yet
-  }
+  } catch (e) {}
 }
 
 function renderDonations() {

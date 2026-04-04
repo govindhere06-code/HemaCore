@@ -14,27 +14,47 @@ async function doLogin() {
     });
     if (data.role !== 'admin') throw new Error('Access denied. Admin account required.');
     token = data.access_token;
+    localStorage.setItem('token', token);
     const me = await apiFetch('/auth/me');
-    document.getElementById('user-name').textContent   = me.name;
-    document.getElementById('user-avatar').textContent = me.name.charAt(0).toUpperCase();
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('app').classList.add('visible');
-    setTopbarActions('dashboard');
-    loadAll();
+    enterAdminApp(me);
   } catch (e) {
     errEl.style.display = 'block';
     errEl.textContent = e.message;
   }
 }
 
+function enterAdminApp(me) {
+  document.getElementById('user-name').textContent   = me.name;
+  document.getElementById('user-avatar').textContent = me.name.charAt(0).toUpperCase();
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.add('visible');
+  setTopbarActions('dashboard');
+  loadAll();
+}
+
 function doLogout() {
   token = '';
+  localStorage.removeItem('token');
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('app').classList.remove('visible');
 }
 
 document.getElementById('login-password').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
+});
+
+// ── AUTO RESTORE SESSION ──────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  if (token) {
+    try {
+      const me = await apiFetch('/auth/me');
+      if (me.role !== 'admin') throw new Error();
+      enterAdminApp(me);
+    } catch {
+      localStorage.removeItem('token');
+      token = '';
+    }
+  }
 });
 
 // ── NAVIGATION ────────────────────────────────────────

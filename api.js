@@ -1,5 +1,5 @@
 const API = 'http://localhost:5000/api';
-let token = '';
+let token = localStorage.getItem('token') || '';
 
 async function apiFetch(path, opts = {}) {
   const res = await fetch(API + path, {
@@ -15,7 +15,6 @@ async function apiFetch(path, opts = {}) {
   return data;
 }
 
-// Toast
 let toastTimer;
 function toast(msg, type = 'success') {
   const el = document.getElementById('toast');
@@ -25,7 +24,6 @@ function toast(msg, type = 'success') {
   toastTimer = setTimeout(() => el.className = '', 3200);
 }
 
-// Date formatter
 function fmtDate(s) {
   if (!s) return '—';
   return new Date(s).toLocaleDateString('en-IN', {
@@ -33,7 +31,6 @@ function fmtDate(s) {
   });
 }
 
-// Modal helpers
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
