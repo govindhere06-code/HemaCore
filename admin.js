@@ -113,6 +113,13 @@ async function loadDashboard() {
       donBadge.style.display = pendingDon ? 'inline-flex' : 'none';
     }
 
+    const pendingReqs = reqs.filter(r => r.status === 'pending').length;
+    const reqBadge = document.getElementById('request-badge');
+    if (reqBadge) {
+      reqBadge.textContent = pendingReqs;
+      reqBadge.style.display = pendingReqs ? 'inline-flex' : 'none';
+    }
+
     const recent = [...reqs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 8);
     document.getElementById('recent-meta').textContent = `${reqs.length} total`;
     const tbody = document.getElementById('recent-body');
@@ -254,6 +261,12 @@ async function updateStatus(id, status) {
     document.getElementById('stat-units').textContent     = inv.reduce((s, i) => s + i.units_available, 0);
     document.getElementById('stat-pending').textContent   = reqs.filter(r => r.status === 'pending').length;
     document.getElementById('stat-fulfilled').textContent = reqs.filter(r => r.status === 'fulfilled').length;
+    const reqBadge = document.getElementById('request-badge');
+    if (reqBadge) {
+      const pendingReqs = reqs.filter(r => r.status === 'pending').length;
+      reqBadge.textContent = pendingReqs;
+      reqBadge.style.display = pendingReqs ? 'inline-flex' : 'none';
+    }
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -311,6 +324,12 @@ async function updateDonationStatus(id, status) {
     renderDonations(allDonations);
     document.getElementById('stat-donors').textContent = donors.length;
     document.getElementById('stat-units').textContent  = inv.reduce((s, i) => s + i.units_available, 0);
+    const donBadge = document.getElementById('donation-badge');
+    if (donBadge) {
+      const pendingDon = donations.filter(d => d.status === 'pending').length;
+      donBadge.textContent = pendingDon;
+      donBadge.style.display = pendingDon ? 'inline-flex' : 'none';
+    }
   } catch (e) { toast(e.message, 'error'); }
 }
 
