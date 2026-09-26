@@ -169,6 +169,45 @@ tbody tr:hover{background:var(--hover)}
 .note-box.ok{background:rgba(29,184,119,0.08);border:1px solid rgba(29,184,119,0.2);color:var(--green-text)}
 .note-box.warn{background:rgba(232,160,32,0.08);border:1px solid rgba(232,160,32,0.2);color:var(--amber)}
 .note-box.bad{background:rgba(192,21,42,0.08);border:1px solid rgba(192,21,42,0.25);color:var(--danger-text)}
+.report-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:18px}
+.report-toolbar input[type=date]{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;padding:7px 10px;outline:none}
+.preset-group{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:3px}
+.preset{background:none;border:none;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;padding:6px 11px;border-radius:6px;cursor:pointer;transition:all .15s}
+.preset:hover{color:var(--text)}
+.preset.active{background:rgba(192,21,42,0.15);color:var(--blood)}
+.btn-ghost-sm{background:var(--bg2);color:var(--text);border:1px solid var(--border)}
+.btn-ghost-sm:hover{border-color:var(--border-hi)}
+.report-note{font-size:13px;color:var(--text-muted);margin-bottom:16px}
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.report-grid .table-card{margin-bottom:0}
+.report-section .table-header{gap:12px}
+.report-section .table-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.report-section td,.report-section th{padding:10px 20px}
+.report-section td.num,.report-section th.num{text-align:right}
+.report-section td.num{font-family:'DM Mono',monospace}
+.report-section tfoot td{font-weight:600;border-top:1px solid var(--border);border-bottom:none}
+.bar-cell{display:flex;align-items:center;gap:10px}
+.bar-cell .bar{height:8px;border-radius:99px;background:var(--blood);opacity:.75;min-width:2px}
+.csv-btn{white-space:nowrap}
+.level-Healthy{color:var(--green-text)}.level-Low{color:var(--amber-text)}.level-Short,.level-Out{color:var(--danger-text)}
+.print-head{display:none}
+@media (max-width:1000px){.report-grid{grid-template-columns:1fr}}
+@media print{
+  :root,:root[data-theme]{--bg:#fff;--bg2:#fff;--bg3:#f4f4f4;--text:#000;--text-muted:#555;--border:#ccc;--line:#ddd;--green-text:#0b7f4c;--amber-text:#9a5b00;--danger-text:#b3122a;color-scheme:light}
+  body{background:#fff}
+  .sidebar,.topbar,.no-print,.csv-btn,#toast,.theme-toggle,.modal-overlay{display:none!important}
+  #app{display:block;opacity:1}
+  .main{overflow:visible}
+  .page{padding:0;animation:none}
+  .print-head{display:block;margin-bottom:12px}
+  .print-head h2{font-family:'DM Serif Display',serif;font-size:22px;font-weight:400}
+  .print-head p{font-size:12px;color:#555}
+  .stat-card,.table-card{border:1px solid #ccc;box-shadow:none;break-inside:avoid}
+  .stat-card:hover{transform:none}
+  .report-grid{grid-template-columns:1fr 1fr}
+  .accent-line{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .bar-cell .bar{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+}
 .modal-overlay{position:fixed;inset:0;background:var(--overlay);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--radius-lg);padding:36px;width:480px;max-width:95vw;transform:scale(.95) translateY(10px);transition:transform .25s}
@@ -277,6 +316,11 @@ tbody tr:hover{background:var(--hover)}
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
         Donation Offers
         <span id="donation-badge" style="display:none;margin-left:auto;background:var(--blood);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:2px 7px"></span>
+      </button>
+      <div class="nav-section">Analysis</div>
+      <button class="nav-item" onclick="showPage('reports',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/></svg>
+        Reports
       </button>
     </nav>
     <div class="sidebar-footer">
@@ -430,6 +474,32 @@ tbody tr:hover{background:var(--hover)}
         <tbody id="donations-body"></tbody></table>
       </div>
     </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="report-toolbar no-print">
+        <div class="preset-group" id="report-presets">
+          <button class="preset" data-preset="7">Last 7 days</button>
+          <button class="preset" data-preset="30">Last 30 days</button>
+          <button class="preset" data-preset="month">This month</button>
+          <button class="preset" data-preset="all">All time</button>
+        </div>
+        <span class="toolbar-label">From</span><input type="date" id="rep-from"/>
+        <span class="toolbar-label">To</span><input type="date" id="rep-to"/>
+        <button class="btn-sm btn-ghost-sm" onclick="loadReports()">Apply</button>
+        <button class="btn-sm btn-red" style="margin-left:auto" onclick="window.print()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print / Save PDF
+        </button>
+      </div>
+      <div class="print-head">
+        <h2>HemaCore Blood Bank — Activity Report</h2>
+        <p id="print-meta"></p>
+      </div>
+      <p class="report-note" id="report-period"></p>
+      <div class="stat-grid" id="report-kpis"></div>
+      <div id="report-body"></div>
+    </div>
   </main>
 </div>
 
@@ -499,7 +569,7 @@ tbody tr:hover{background:var(--hover)}
   </div>
 </div>
 
-<script src="api.js?v=11"></script>
-<script src="admin.js?v=11"></script>
+<script src="api.js?v=12"></script>
+<script src="admin.js?v=12"></script>
 </body>
 </html>

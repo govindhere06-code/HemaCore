@@ -102,7 +102,7 @@ function showPage(name, btn) {
   btn.classList.add('active');
   const titles = {
     dashboard: 'Dashboard', donors: 'Donors',
-    inventory: 'Inventory', requests: 'Requests', donations: 'Donation Offers'
+    inventory: 'Inventory', requests: 'Requests', donations: 'Donation Offers', reports: 'Reports'
   };
   document.getElementById('page-title').textContent = titles[name];
   setTopbarActions(name);
@@ -111,6 +111,7 @@ function showPage(name, btn) {
   if (name === 'inventory') loadInventory();
   if (name === 'requests')  applyRequestFilters();
   if (name === 'donations') applyDonationFilters();
+  if (name === 'reports')   openReports();
 }
 
 function goTo(name) {
@@ -123,7 +124,7 @@ function setTopbarActions(page) {
   const actions = {
     donors:    `<button class="btn-sm btn-red" onclick="openDonorModal()">${plusIcon} Add Donor</button>`,
     inventory: `<button class="btn-sm btn-red" onclick="openModal('modal-inventory')">${plusIcon} Update Stock</button>`,
-    requests: '', dashboard: '', donations: '',
+    requests: '', dashboard: '', donations: '', reports: '',
   };
   el.innerHTML = actions[page] || '';
 }
@@ -716,4 +717,192 @@ async function submitDonationEdit() {
     allDonations = await apiFetch('/donations/');
     applyDonationFilters();
   } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── REPORTS ───────────────────────────────────────────
+let reportData = null;
+
+const REQUEST_STATUSES  = ['pending', 'approved', 'fulfilled', 'rejected'];
+const DONATION_STATUSES = ['pending', 'approved', 'completed', 'rejected'];
+
+// YYYY-MM-DD in local time (toISOString would use UTC)
+function isoLocal(d) {
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+function fmtDay(iso) {
+  return iso ? new Date(iso + 'T00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+}
+
+function setPreset(preset) {
+  const today = new Date();
+  let from = '';
+  if (preset === '7' || preset === '30') from = isoLocal(new Date(today.getTime() - (Number(preset) - 1) * 86400000));
+  if (preset === 'month') from = isoLocal(new Date(today.getFullYear(), today.getMonth(), 1));
+  document.getElementById('rep-from').value = from;
+  document.getElementById('rep-to').value   = isoLocal(today);
+  markPreset(preset);
+  loadReports();
+}
+
+function markPreset(preset) {
+  document.querySelectorAll('#report-presets .preset').forEach(b => b.classList.toggle('active', b.dataset.preset === preset));
+}
+
+document.querySelectorAll('#report-presets .preset').forEach(b => b.addEventListener('click', () => setPreset(b.dataset.preset)));
+['rep-from', 'rep-to'].forEach(id => document.getElementById(id).addEventListener('change', () => markPreset(null)));
+
+function openReports() {
+  if (!reportData) setPreset('30');
+}
+
+async function loadReports() {
+  const from = val('rep-from'), to = val('rep-to');
+  const qs = new URLSearchParams();
+  if (from) qs.set('from', from);
+  if (to) qs.set('to', to);
+  try {
+    reportData = await apiFetch('/reports/?' + qs);
+    renderReports();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Column helper: key, label, options { num, fmt(row) → HTML, csv(row) → text, bar, total, hidden }
+const col = (key, label, opts = {}) => ({ key, label, ...opts });
+const cap = s => s[0].toUpperCase() + s.slice(1);
+const statusCol = col('status', 'Status', { fmt: r => `<span class="badge badge-${r.status}">${r.status}</span>`, csv: r => cap(r.status) });
+const typeCol   = col('blood_type', 'Blood Type', { fmt: r => `<span class="badge badge-blood">${r.blood_type}</span>` });
+
+// Status tables always list every status, with zeros where there were none
+function withAllStatuses(rows, statuses, zero) {
+  return statuses.map(s => rows.find(r => r.status === s) || { status: s, ...zero });
+}
+
+function reportSections(d) {
+  return {
+    stock: {
+      title: 'Stock & Pending Demand', sub: 'Current stock against units needed by pending requests (not date-filtered)',
+      rows: d.stock,
+      cols: [typeCol, col('in_stock', 'In Stock', { num: 1, total: 1 }), col('pending_demand', 'Pending Demand', { num: 1, total: 1 }),
+        col('after_pending', 'After Pending', { num: 1, total: 1 }),
+        col('level', 'Level', { fmt: r => `<span class="level-${r.level.split(' ')[0]}">${r.level}</span>` })],
+    },
+    reqStatus: {
+      title: 'Requests by Status', sub: 'Requests submitted in the period',
+      rows: withAllStatuses(d.requests_by_status, REQUEST_STATUSES, { requests: 0, units: 0 }),
+      cols: [statusCol, col('requests', 'Requests', { num: 1, total: 1 }), col('units', 'Units', { num: 1, total: 1 })],
+    },
+    reqDay: {
+      title: 'Requests per Day', sub: 'Days with at least one request',
+      rows: d.requests_by_day,
+      cols: [col('day', 'Date', { fmt: r => fmtDay(r.day), csv: r => r.day }), col('requests', 'Requests', { bar: 1, total: 1 }),
+        col('units', 'Units', { num: 1, total: 1 })],
+    },
+    reqType: {
+      title: 'Requests by Blood Type', sub: 'Units issued = approved or fulfilled',
+      rows: d.requests_by_type,
+      cols: [typeCol, col('requests', 'Requests', { num: 1, total: 1 }), col('units_requested', 'Units Requested', { num: 1, total: 1 }),
+        col('units_issued', 'Units Issued', { num: 1, total: 1 })],
+    },
+    hospitals: {
+      title: 'Top Hospitals', sub: 'By number of requests in the period',
+      rows: d.requests_by_hospital,
+      cols: [col('hospital', 'Hospital', { fmt: r => esc(r.hospital) }), col('requests', 'Requests', { num: 1 }), col('units', 'Units', { num: 1 })],
+    },
+    donStatus: {
+      title: 'Donation Offers by Status', sub: 'Offers submitted in the period',
+      rows: withAllStatuses(d.donations_by_status, DONATION_STATUSES, { offers: 0, units: 0 }),
+      cols: [statusCol, col('offers', 'Offers', { num: 1, total: 1 }), col('units', 'Units', { num: 1, total: 1 })],
+    },
+    donType: {
+      title: 'Donations by Blood Type', sub: 'Units received = approved or completed',
+      rows: d.donations_by_type,
+      cols: [typeCol, col('offers', 'Offers', { num: 1, total: 1 }), col('units_received', 'Units Received', { num: 1, total: 1 })],
+    },
+    donors: {
+      title: 'Top Donors', sub: 'By units received in the period',
+      rows: d.top_donors,
+      cols: [col('name', 'Donor', { fmt: r => `<strong>${esc(r.name)}</strong><span class="cell-sub">${esc(r.email)}</span>` }),
+        col('email', 'Email', { hidden: 1 }), col('offers', 'Offers', { num: 1 }), col('units_received', 'Units Received', { num: 1 })],
+    },
+    register: {
+      title: 'Donor Register by Blood Type', sub: `Eligible now = no donation in the last ${DONATION_GAP_DAYS} days (not date-filtered)`,
+      rows: d.donors_by_type,
+      cols: [typeCol, col('donors', 'Donors', { num: 1, total: 1 }), col('eligible_now', 'Eligible Now', { num: 1, total: 1 })],
+    },
+  };
+}
+
+const REPORT_LAYOUT = [['stock'], ['reqStatus', 'reqDay'], ['reqType', 'hospitals'], ['donStatus', 'donType'], ['donors', 'register']];
+
+function renderReports() {
+  const d = reportData, t = d.totals;
+  const from = val('rep-from') ? fmtDay(d.period.from) : 'the beginning';
+  const periodText = `Requests, donation offers and new donors submitted from ${from} to ${fmtDay(d.period.to)}.`;
+  document.getElementById('report-period').textContent = periodText;
+  document.getElementById('print-meta').textContent =
+    `${periodText} Generated ${new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}.`;
+
+  document.getElementById('report-kpis').innerHTML = [
+    ['red', 'Requests', t.requests, `${t.units_requested} units requested`],
+    ['green', 'Units Issued', t.units_issued, t.approval_rate === null ? 'No decisions yet' : `${t.approval_rate}% of decided requests approved`],
+    ['blue', 'Units Received', t.units_received, `${t.offers} donation offer${t.offers !== 1 ? 's' : ''}`],
+    ['amber', 'Stock Now', t.units_in_stock, `${t.new_donors} new donor${t.new_donors !== 1 ? 's' : ''} in period`],
+  ].map(([c, label, value, sub]) => `<div class="stat-card ${c}"><div class="accent-line"></div><div class="stat-label">${label}</div>
+      <div class="stat-value">${value}</div><div class="stat-sub">${sub}</div></div>`).join('');
+
+  const sections = reportSections(d);
+  document.getElementById('report-body').innerHTML = REPORT_LAYOUT.map(row =>
+    row.length === 1 ? renderReportSection(row[0], sections[row[0]])
+      : `<div class="report-grid">${row.map(id => renderReportSection(id, sections[id])).join('')}</div>`
+  ).join('');
+}
+
+function sectionTotal(s, c) {
+  return s.rows.reduce((sum, r) => sum + r[c.key], 0);
+}
+
+function renderReportSection(id, s) {
+  const cols = s.cols.filter(c => !c.hidden);
+  const max = {};
+  cols.filter(c => c.bar).forEach(c => max[c.key] = Math.max(...s.rows.map(r => r[c.key]), 1));
+  const cell = (c, r) => c.bar
+    ? `<td><div class="bar-cell"><div class="bar" style="width:${r[c.key] / max[c.key] * 80}%"></div><span>${r[c.key]}</span></div></td>`
+    : `<td class="${c.num ? 'num' : ''}">${c.fmt ? c.fmt(r) : esc(r[c.key])}</td>`;
+  const totals = cols.some(c => c.total) && s.rows.length > 1
+    ? `<tfoot><tr>${cols.map((c, i) => `<td class="${c.num ? 'num' : ''}">${i === 0 ? 'Total' : c.total ? sectionTotal(s, c) : ''}</td>`).join('')}</tr></tfoot>`
+    : '';
+
+  return `<div class="table-card report-section">
+    <div class="table-header">
+      <div><div class="table-title">${s.title}</div><div class="table-sub">${s.sub}</div></div>
+      <button class="action-btn csv-btn" onclick="exportReportCSV('${id}')">⬇ CSV</button>
+    </div>
+    <table>
+      <thead><tr>${cols.map(c => `<th class="${c.num ? 'num' : ''}">${c.label}</th>`).join('')}</tr></thead>
+      <tbody>${s.rows.length ? s.rows.map(r => `<tr>${cols.map(c => cell(c, r)).join('')}</tr>`).join('')
+        : `<tr><td colspan="${cols.length}"><div class="empty-state" style="padding:28px"><p>No data for this period</p></div></td></tr>`}</tbody>
+      ${totals}
+    </table>
+  </div>`;
+}
+
+function exportReportCSV(id) {
+  const s = reportSections(reportData)[id];
+  const quote = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [s.cols.map(c => quote(c.label)).join(',')];
+  s.rows.forEach(r => lines.push(s.cols.map(c => quote(c.csv ? c.csv(r) : r[c.key])).join(',')));
+  if (s.cols.some(c => c.total) && s.rows.length > 1)
+    lines.push(s.cols.map((c, i) => quote(i === 0 ? 'Total' : c.total ? sectionTotal(s, c) : '')).join(','));
+
+  const { from, to } = reportData.period;
+  const name = `hemacore-${s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${val('rep-from') ? from : 'start'}-to-${to}.csv`;
+  // The BOM makes Excel open the file as UTF-8
+  const url = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast(`Exported ${name}`, 'success');
 }

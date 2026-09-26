@@ -11,6 +11,7 @@ from donors import donors_bp
 from inventory import inventory_bp
 from requests import requests_bp
 from donations import donations_bp   # ← new
+from reports import reports_bp
 
 app = Flask(__name__)
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "change-me")
@@ -24,6 +25,7 @@ app.register_blueprint(donors_bp,    url_prefix="/api/donors")
 app.register_blueprint(inventory_bp, url_prefix="/api/inventory")
 app.register_blueprint(requests_bp,  url_prefix="/api/requests")
 app.register_blueprint(donations_bp, url_prefix="/api/donations")  # ← new
+app.register_blueprint(reports_bp,   url_prefix="/api/reports")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

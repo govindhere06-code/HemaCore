@@ -18,6 +18,7 @@ frontend/   Admin and user portals (HTML, CSS, JavaScript)
 | `inventory.py` | Blood stock |
 | `requests.py` | Blood requests |
 | `donations.py` | Donation offers |
+| `reports.py` | Admin reports (stock, requests, donations, donors) |
 | `schema.sql` | Database tables |
 | `create_admin.py` | Creates the first admin account |
 
