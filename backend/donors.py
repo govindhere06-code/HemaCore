@@ -1,12 +1,11 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
 from db import get_db
 from auth import admin_required
 
 donors_bp = Blueprint("donors", __name__)
 
 @donors_bp.route("/", methods=["GET"])
-@jwt_required()
+@admin_required
 def list_donors():
     blood_type = request.args.get("blood_type")
     db  = get_db()
@@ -22,7 +21,7 @@ def list_donors():
         db.close()
 
 @donors_bp.route("/<int:donor_id>", methods=["GET"])
-@jwt_required()
+@admin_required
 def get_donor(donor_id):
     db  = get_db()
     cur = db.cursor(dictionary=True)

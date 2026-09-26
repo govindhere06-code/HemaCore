@@ -29,14 +29,23 @@ REQUEST_SELECT = """
 @requests_bp.route("/", methods=["GET"])
 @jwt_required()
 def list_requests():
+    """Admins get every request; everyone else gets only their own."""
     status = request.args.get("status")
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Account not found"}), 401
+    conditions, params = [], []
+    if user["role"] != "admin":
+        conditions.append("r.created_by = %s")
+        params.append(user["id"])
+    if status:
+        conditions.append("r.status = %s")
+        params.append(status)
+    query = REQUEST_SELECT + (" WHERE " + " AND ".join(conditions) if conditions else "") + " ORDER BY r.created_at DESC"
     db  = get_db()
     cur = db.cursor(dictionary=True)
     try:
-        if status:
-            cur.execute(REQUEST_SELECT + " WHERE r.status = %s ORDER BY r.created_at DESC", (status,))
-        else:
-            cur.execute(REQUEST_SELECT + " ORDER BY r.created_at DESC")
+        cur.execute(query, params)
         return jsonify(cur.fetchall()), 200
     finally:
         cur.close()
@@ -46,12 +55,16 @@ def list_requests():
 @requests_bp.route("/<int:request_id>", methods=["GET"])
 @jwt_required()
 def get_request(request_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Account not found"}), 401
     db  = get_db()
     cur = db.cursor(dictionary=True)
     try:
         cur.execute(REQUEST_SELECT + " WHERE r.id = %s", (request_id,))
         req = cur.fetchone()
-        if not req:
+        # Someone else's request is reported as not found, so its existence isn't revealed
+        if not req or (user["role"] != "admin" and str(req["created_by"]) != str(user["id"])):
             return jsonify({"error": "Request not found"}), 404
         return jsonify(req), 200
     finally:

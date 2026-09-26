@@ -30,9 +30,12 @@ OFFER_SELECT = """
 @donations_bp.route("/", methods=["GET"])
 @jwt_required()
 def list_donations():
-    """Admin gets all; regular user gets their own via query param or filtered client-side."""
+    """Admins get every offer (optionally for one ?user_id=); everyone else gets only their own."""
     status  = request.args.get("status")
-    user_id = request.args.get("user_id")
+    user    = current_user()
+    if not user:
+        return jsonify({"error": "Account not found"}), 401
+    user_id = request.args.get("user_id") if user["role"] == "admin" else user["id"]
     db  = get_db()
     cur = db.cursor(dictionary=True)
     try:
@@ -58,12 +61,16 @@ def list_donations():
 @donations_bp.route("/<int:donation_id>", methods=["GET"])
 @jwt_required()
 def get_donation(donation_id):
+    user = current_user()
+    if not user:
+        return jsonify({"error": "Account not found"}), 401
     db  = get_db()
     cur = db.cursor(dictionary=True)
     try:
         cur.execute(OFFER_SELECT + " WHERE d.id = %s", (donation_id,))
         record = cur.fetchone()
-        if not record:
+        # Someone else's offer is reported as not found, so its existence isn't revealed
+        if not record or (user["role"] != "admin" and str(record["user_id"]) != str(user["id"])):
             return jsonify({"error": "Donation offer not found"}), 404
         return jsonify(record), 200
     finally:
