@@ -7,7 +7,7 @@ import bcrypt
 auth_bp = Blueprint("auth", __name__)
 
 # Role given to everyone who signs up. Admin accounts are only created with create_admin.py.
-SIGNUP_ROLE = "staff"
+SIGNUP_ROLE = "user"
 
 
 def current_user():
@@ -62,7 +62,7 @@ def register():
             (name, email, hashed, SIGNUP_ROLE, phone),
         )
         # The new user's donor record is created here, in the same transaction,
-        # because adding donors through /api/donors is admin-only. If staff already
+        # because adding donors through /api/donors is admin-only. If an admin already
         # registered this person as a donor, that record is kept (one per email).
         cur.execute("SELECT id FROM donors WHERE email = %s", (email,))
         if blood and phone and not cur.fetchone():

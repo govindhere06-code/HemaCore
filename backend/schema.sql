@@ -4,13 +4,13 @@
 CREATE DATABASE IF NOT EXISTS bloodbank_db;
 USE bloodbank_db;
 
--- ─── Users (staff / admin) ────────────────────────────────────────────────────
+-- ─── Users (admin / user) ─────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (
     id            INT AUTO_INCREMENT PRIMARY KEY,
     name          VARCHAR(100)                        NOT NULL,
     email         VARCHAR(150) UNIQUE                 NOT NULL,
     password_hash VARCHAR(255)                        NOT NULL,
-    role          ENUM('admin', 'staff') DEFAULT 'staff',
+    role          ENUM('admin', 'user')  NOT NULL DEFAULT 'user',
     phone         VARCHAR(20),
     created_at    TIMESTAMP              DEFAULT CURRENT_TIMESTAMP
 );

@@ -23,6 +23,7 @@ frontend/   Admin and user portals (HTML, CSS, JavaScript)
 | `schema.sql` | Database tables |
 | `create_admin.py` | Creates the first admin account |
 | `fix_duplicate_donors.py` | One-time fix for databases created before donor emails were unique: merges duplicate donors and adds the unique rule |
+| `migrate_user_role.py` | One-time fix for databases created before the `user` role existed: converts old `staff` sign-ups to `user` |
 
 | Frontend file | Purpose |
 |---|---|
