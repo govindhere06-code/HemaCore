@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from db import get_db
+from notifications import check_low_stock
 
 inventory_bp = Blueprint("inventory", __name__)
 
@@ -78,6 +79,7 @@ def deduct_units():
             "UPDATE blood_inventory SET units_available = units_available - %s WHERE blood_type = %s",
             (units, blood_type),
         )
+        check_low_stock(db, blood_type, record["units_available"], record["units_available"] - units)
         db.commit()
         return jsonify({"message": f"{units} units deducted for {blood_type}"}), 200
     except Exception as e:

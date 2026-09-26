@@ -127,6 +127,10 @@ function enterApp(me, bloodType = null) {
 
   document.getElementById('home-greeting').textContent = `Welcome, ${me.name.split(' ')[0]}`;
   Promise.all([loadMyRequests(), loadMyDonations()]).then(loadHome);
+  startNotifications({
+    open: page => showPage(page, document.getElementById('nav-' + page)),
+    onNew: () => Promise.all([loadMyRequests(), loadMyDonations()]).then(loadHome),
+  });
 }
 
 // ── HOME ──────────────────────────────────────────────
@@ -191,6 +195,7 @@ function renderActivity() {
 }
 
 function doLogout() {
+  stopNotifications();
   clearToken();
   currentUserId = null;
   currentUserBloodType = null;

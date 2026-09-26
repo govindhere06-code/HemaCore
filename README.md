@@ -19,6 +19,7 @@ frontend/   Admin and user portals (HTML, CSS, JavaScript)
 | `requests.py` | Blood requests |
 | `donations.py` | Donation offers |
 | `reports.py` | Admin reports (stock, requests, donations, donors) |
+| `notifications.py` | In-app notifications (status updates, new requests/offers, low-stock alerts) |
 | `schema.sql` | Database tables |
 | `create_admin.py` | Creates the first admin account |
 

@@ -1,7 +1,19 @@
+from datetime import date
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from db import get_db, BLOOD_TYPES
 from auth import current_user
+from notifications import notify, notify_admins
+
+# What the donor is told when an admin changes their offer's status
+STATUS_NOTICES = {
+    "approved":  ("success", "Donation offer approved",
+                  "Thank you! Your offer to donate {units} unit(s) of {bt} on {date} ({time}) was approved. See you then."),
+    "completed": ("success", "Donation completed",
+                  "Your donation of {units} unit(s) of {bt} has been recorded. Thank you for saving lives!"),
+    "rejected":  ("danger", "Donation offer declined",
+                  "Your offer to donate {units} unit(s) of {bt} on {date} could not be accepted. Please contact the blood bank."),
+}
 
 donations_bp = Blueprint("donations", __name__)
 
@@ -84,8 +96,19 @@ def create_donation():
                VALUES (%s, %s, %s, %s, %s, %s, 'pending')""",
             (user_id, blood_type, units, pref_date, pref_time, notes),
         )
+        new_id = cur.lastrowid
+        cur.execute("SELECT name FROM users WHERE id = %s", (user_id,))
+        donor = cur.fetchone()
+        try:
+            when = date.fromisoformat(pref_date).strftime("%d %b %Y")
+        except (TypeError, ValueError):
+            when = pref_date
+        notify_admins(db, "New donation offer",
+                      f"{donor[0] if donor else 'A donor'} offered {units} unit{'s' if units != 1 else ''} "
+                      f"of {blood_type} on {when} ({pref_time}).",
+                      "info", "donations")
         db.commit()
-        return jsonify({"message": "Donation offer submitted", "id": cur.lastrowid}), 201
+        return jsonify({"message": "Donation offer submitted", "id": new_id}), 201
     except Exception as e:
         db.rollback()
         return jsonify({"error": str(e)}), 400
@@ -187,6 +210,15 @@ def update_donation_status(donation_id):
                 (offer["blood_type"], offer["units"]),
             )
             cur2.close()
+
+        if status != offer["status"] and status in STATUS_NOTICES:
+            type_, title, text = STATUS_NOTICES[status]
+            pref = offer["preferred_date"]
+            notify(db, [offer["user_id"]], title,
+                   text.format(units=offer["units"], bt=offer["blood_type"],
+                               date=pref.strftime("%d %b %Y") if pref else "the chosen date",
+                               time=offer["preferred_time"] or "any time"),
+                   type_, "donate")
 
         db.commit()
         return jsonify({"message": f"Donation offer status updated to '{status}'"}), 200

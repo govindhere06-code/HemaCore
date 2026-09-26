@@ -69,9 +69,11 @@ function enterAdminApp(me) {
   document.getElementById('app').classList.add('visible');
   setTopbarActions('dashboard');
   loadAll();
+  startNotifications({ open: goTo, onNew: loadDashboard });
 }
 
 function doLogout() {
+  stopNotifications();
   clearToken();
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('app').classList.remove('visible');

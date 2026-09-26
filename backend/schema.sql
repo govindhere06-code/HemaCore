@@ -69,3 +69,18 @@ CREATE TABLE IF NOT EXISTS donation_offers (
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- ─── Notifications ────────────────────────────────────────────────────────────
+-- One row per recipient. `link` names the portal page the notification opens.
+CREATE TABLE IF NOT EXISTS notifications (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT          NOT NULL,
+    title      VARCHAR(150) NOT NULL,
+    message    VARCHAR(500) NOT NULL,
+    type       ENUM('info','success','warning','danger') DEFAULT 'info',
+    link       VARCHAR(50),
+    is_read    BOOLEAN   DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_unread (user_id, is_read)
+);

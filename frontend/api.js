@@ -80,6 +80,117 @@ document.querySelectorAll('.theme-toggle').forEach(b => {
 });
 updateThemeLabels();
 
+// ── NOTIFICATIONS ─────────────────────────────────────
+// Each portal calls startNotifications() after login with:
+//   open(link) — go to the page a notification points to
+//   onNew()    — refresh whatever the new notifications might affect
+const NOTIF_POLL_MS = 30000;
+let notifTimer = null, notifLastId = null, notifItems = [], notifHandlers = {};
+let notifLoadSeq = 0;   // lets a slow, older response be ignored if a newer one was started
+
+function timeAgo(iso) {
+  const secs = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+  if (secs < 60) return 'just now';
+  if (secs < 3600) return `${Math.floor(secs / 60)} min ago`;
+  if (secs < 86400) return `${Math.floor(secs / 3600)} hr ago`;
+  if (secs < 7 * 86400) return `${Math.floor(secs / 86400)} day${secs >= 2 * 86400 ? 's' : ''} ago`;
+  return fmtDate(iso);
+}
+
+function startNotifications(handlers) {
+  notifHandlers = handlers;
+  notifLastId = null;
+  loadNotifications();
+  clearInterval(notifTimer);
+  notifTimer = setInterval(loadNotifications, NOTIF_POLL_MS);
+}
+
+function stopNotifications() {
+  clearInterval(notifTimer);
+  notifTimer = null;
+  notifLoadSeq++;   // drop any response still in flight for the previous user
+  notifItems = [];
+  renderNotifications(0);
+  closeNotifPanel();
+}
+
+async function loadNotifications() {
+  if (!token) return;
+  const seq = ++notifLoadSeq;
+  try {
+    const data = await apiFetch('/notifications/');
+    if (seq !== notifLoadSeq || !token) return;
+    const newest = data.items[0]?.id ?? 0;
+    // Pop up anything that arrived since the last check (not on the first load)
+    if (notifLastId !== null) {
+      const fresh = data.items.filter(n => n.id > notifLastId && !n.is_read);
+      if (fresh.length) {
+        toast(fresh.length === 1 ? `🔔 ${fresh[0].title}` : `🔔 ${fresh.length} new notifications`, 'success');
+        notifHandlers.onNew?.();
+      }
+    }
+    notifLastId = Math.max(notifLastId ?? 0, newest);
+    notifItems = data.items;
+    renderNotifications(data.unread);
+  } catch { /* try again on the next poll */ }
+}
+
+function renderNotifications(unread) {
+  const badge = document.getElementById('notif-badge');
+  if (badge) {
+    badge.textContent = unread > 9 ? '9+' : unread;
+    badge.style.display = unread ? 'flex' : 'none';
+  }
+  const list = document.getElementById('notif-list');
+  if (!list) return;
+  list.innerHTML = notifItems.length
+    ? notifItems.map(n => `
+      <button class="notif-item ${n.is_read ? '' : 'unread'}" onclick="openNotification(${n.id})">
+        <span class="notif-dot ${n.type}"></span>
+        <span class="notif-text">
+          <span class="notif-title">${esc(n.title)}</span>
+          <span class="notif-msg">${esc(n.message)}</span>
+          <span class="notif-time">${timeAgo(n.created_at)}</span>
+        </span>
+      </button>`).join('')
+    : `<div class="notif-empty">You're all caught up — no notifications yet.</div>`;
+}
+
+function toggleNotifPanel(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('notif-panel');
+  const opening = !panel.classList.contains('open');
+  panel.classList.toggle('open', opening);
+  if (opening) loadNotifications();
+}
+
+function closeNotifPanel() {
+  document.getElementById('notif-panel')?.classList.remove('open');
+}
+
+async function openNotification(id) {
+  const n = notifItems.find(x => x.id === id);
+  if (!n) return;
+  closeNotifPanel();
+  if (!n.is_read) {
+    try { await apiFetch(`/notifications/${id}/read`, { method: 'PATCH' }); } catch {}
+  }
+  if (n.link) notifHandlers.open?.(n.link);
+  await loadNotifications();
+}
+
+async function markAllNotificationsRead(e) {
+  e.stopPropagation();
+  try {
+    await apiFetch('/notifications/read-all', { method: 'POST' });
+    await loadNotifications();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#notif-panel')) closeNotifPanel();
+});
+
 // Escape user-entered text before putting it into innerHTML
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>

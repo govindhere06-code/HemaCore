@@ -9,6 +9,7 @@
 <style>
 /* Dark is this portal's default theme; [data-theme="light"] switches it */
 :root {
+  --notif-accent:var(--blood); --notif-border:var(--border); --notif-hover:var(--hover); --notif-unread:rgba(192,21,42,0.07);
   color-scheme:dark;
   --blood:#c0152a; --blood-dark:#8a0e1e;
   --bg:#0a0a0b; --bg2:#111114; --bg3:#18181d;
@@ -208,6 +209,28 @@ tbody tr:hover{background:var(--hover)}
   .accent-line{print-color-adjust:exact;-webkit-print-color-adjust:exact}
   .bar-cell .bar{print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }
+.notif-wrap{position:relative}
+.notif-bell{position:relative;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid var(--notif-border);background:var(--bg2);color:var(--text-muted);cursor:pointer;transition:all .15s}
+.notif-bell:hover{color:var(--text);border-color:var(--notif-accent)}
+.notif-badge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--notif-accent);color:#fff;font-size:10px;font-weight:700;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:360px;max-width:calc(100vw - 32px);background:var(--bg2);border:1px solid var(--notif-border);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);z-index:60;display:none;overflow:hidden}
+.notif-panel.open{display:block}
+.notif-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--notif-border);font-size:14px}
+.notif-readall{background:none;border:none;color:var(--notif-accent);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.notif-list{max-height:380px;overflow-y:auto}
+.notif-item{display:flex;gap:10px;width:100%;text-align:left;padding:12px 16px;background:none;border:none;border-bottom:1px solid var(--notif-border);cursor:pointer;font-family:inherit;color:var(--text);transition:background .15s}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:var(--notif-hover)}
+.notif-item.unread{background:var(--notif-unread)}
+.notif-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;background:#3b82f6}
+.notif-dot.success{background:#1db877}.notif-dot.warning{background:#e8a020}.notif-dot.danger{background:#e8304a}
+.notif-item:not(.unread) .notif-dot{opacity:.35}
+.notif-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.notif-title{font-size:13px;font-weight:600}
+.notif-msg{font-size:12px;color:var(--text-muted);line-height:1.4}
+.notif-time{font-size:11px;color:var(--text-dim)}
+.notif-empty{padding:28px 16px;text-align:center;font-size:13px;color:var(--text-muted)}
+@media print{.notif-wrap{display:none!important}}
 .modal-overlay{position:fixed;inset:0;background:var(--overlay);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--radius-lg);padding:36px;width:480px;max-width:95vw;transform:scale(.95) translateY(10px);transition:transform .25s}
@@ -342,6 +365,16 @@ tbody tr:hover{background:var(--hover)}
       <h1 id="page-title">Dashboard</h1>
       <div class="topbar-actions">
         <div class="topbar-actions" id="topbar-actions"></div>
+        <div class="notif-wrap">
+        <button class="notif-bell" onclick="toggleNotifPanel(event)" aria-label="Notifications" title="Notifications">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="notif-badge" id="notif-badge" style="display:none"></span>
+        </button>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-head"><strong>Notifications</strong><button class="notif-readall" onclick="markAllNotificationsRead(event)">Mark all read</button></div>
+          <div class="notif-list" id="notif-list"></div>
+        </div>
+      </div>
         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Switch theme"></button>
       </div>
     </div>
@@ -569,7 +602,7 @@ tbody tr:hover{background:var(--hover)}
   </div>
 </div>
 
-<script src="api.js?v=12"></script>
-<script src="admin.js?v=12"></script>
+<script src="api.js?v=14"></script>
+<script src="admin.js?v=14"></script>
 </body>
 </html>

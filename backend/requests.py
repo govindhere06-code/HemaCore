@@ -2,6 +2,17 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from db import get_db, BLOOD_TYPES
 from auth import current_user
+from notifications import notify, notify_admins, check_low_stock
+
+# What the requester is told when an admin changes their request's status
+STATUS_NOTICES = {
+    "approved":  ("success", "Blood request approved",
+                  "Your request for {units} unit(s) of {bt} for {patient} was approved. The blood has been reserved."),
+    "fulfilled": ("success", "Blood request fulfilled",
+                  "Your request for {units} unit(s) of {bt} for {patient} has been fulfilled."),
+    "rejected":  ("danger", "Blood request rejected",
+                  "Your request for {units} unit(s) of {bt} for {patient} was rejected. Please contact the blood bank."),
+}
 
 requests_bp = Blueprint("requests", __name__)
 
@@ -68,8 +79,12 @@ def create_request():
                VALUES (%s, %s, %s, %s, 'pending', %s)""",
             (blood_type, units, patient, hospital, created_by),
         )
+        new_id = cur.lastrowid
+        notify_admins(db, "New blood request",
+                      f"{units} unit{'s' if units != 1 else ''} of {blood_type} for {patient} at {hospital}.",
+                      "info", "requests")
         db.commit()
-        return jsonify({"message": "Request submitted", "id": cur.lastrowid}), 201
+        return jsonify({"message": "Request submitted", "id": new_id}), 201
     except Exception as e:
         db.rollback()
         return jsonify({"error": str(e)}), 400
@@ -178,6 +193,7 @@ def update_status(request_id):
                 (units, blood_type)
             )
             cur2.close()
+            check_low_stock(db, blood_type, inv["units_available"], inv["units_available"] - units)
 
         # ── RESTORE INVENTORY if rejecting a previously approved request ─────
         if new_status == "rejected" and old_status in deduct_on:
@@ -197,6 +213,12 @@ def update_status(request_id):
             (new_status, request_id)
         )
         cur2.close()
+
+        if new_status != old_status and new_status in STATUS_NOTICES:
+            type_, title, text = STATUS_NOTICES[new_status]
+            notify(db, [req["created_by"]], title,
+                   text.format(units=req["units"], bt=req["blood_type"], patient=req["patient_name"]),
+                   type_, "requests")
 
         db.commit()
         return jsonify({"message": f"Status updated to '{new_status}'"}), 200
