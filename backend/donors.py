@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from db import get_db
+from auth import admin_required
 
 donors_bp = Blueprint("donors", __name__)
 
@@ -36,7 +37,7 @@ def get_donor(donor_id):
         db.close()
 
 @donors_bp.route("/", methods=["POST"])
-@jwt_required()
+@admin_required
 def create_donor():
     data = request.get_json()
     required = ["name", "blood_type", "phone"]
@@ -62,7 +63,7 @@ def create_donor():
         db.close()
 
 @donors_bp.route("/<int:donor_id>", methods=["PUT"])
-@jwt_required()
+@admin_required
 def update_donor(donor_id):
     data = request.get_json()
     fields = ["name", "blood_type", "phone", "email", "date_of_birth", "address", "last_donation_date"]
@@ -86,7 +87,7 @@ def update_donor(donor_id):
         db.close()
 
 @donors_bp.route("/<int:donor_id>", methods=["DELETE"])
-@jwt_required()
+@admin_required
 def delete_donor(donor_id):
     db  = get_db()
     cur = db.cursor()

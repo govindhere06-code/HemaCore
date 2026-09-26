@@ -1,9 +1,13 @@
+from functools import wraps
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from db import get_db, BLOOD_TYPES
 import bcrypt
 
 auth_bp = Blueprint("auth", __name__)
+
+# Role given to everyone who signs up. Admin accounts are only created with create_admin.py.
+SIGNUP_ROLE = "staff"
 
 
 def current_user():
@@ -18,17 +22,36 @@ def current_user():
         db.close()
 
 
+def admin_required(fn):
+    """Like @jwt_required(), but the logged-in account must also be an admin."""
+    @wraps(fn)
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+        user = current_user()
+        if not user or user["role"] != "admin":
+            return jsonify({"error": "Admin access required"}), 403
+        return fn(*args, **kwargs)
+    return wrapper
+
+
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
     name     = data.get("name", "").strip()
     email    = data.get("email", "").strip().lower()
     password = data.get("password", "")
-    role     = data.get("role", "staff")
     phone    = (data.get("phone") or "").strip() or None
+    blood    = data.get("blood_type") or None
+    dob      = data.get("date_of_birth") or None
+    address  = (data.get("address") or "").strip() or None
+    # Any "role" sent by the client is ignored — see SIGNUP_ROLE
 
     if not all([name, email, password]):
         return jsonify({"error": "name, email and password are required"}), 400
+    if len(password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
+    if blood and blood not in BLOOD_TYPES:
+        return jsonify({"error": "Invalid blood type"}), 400
 
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     db  = get_db()
@@ -36,8 +59,16 @@ def register():
     try:
         cur.execute(
             "INSERT INTO users (name, email, password_hash, role, phone) VALUES (%s, %s, %s, %s, %s)",
-            (name, email, hashed, role, phone),
+            (name, email, hashed, SIGNUP_ROLE, phone),
         )
+        # The new user's donor record is created here, in the same transaction,
+        # because adding donors through /api/donors is admin-only
+        if blood and phone:
+            cur.execute(
+                """INSERT INTO donors (name, blood_type, phone, email, date_of_birth, address)
+                   VALUES (%s, %s, %s, %s, %s, %s)""",
+                (name, blood, phone, email, dob, address),
+            )
         db.commit()
         return jsonify({"message": "User registered successfully"}), 201
     except Exception as e:

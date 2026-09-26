@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from db import get_db, BLOOD_TYPES
-from auth import current_user
+from auth import current_user, admin_required
 from notifications import notify, notify_admins, check_low_stock
 
 # What the requester is told when an admin changes their request's status
@@ -144,7 +144,7 @@ def edit_request(request_id):
 
 
 @requests_bp.route("/<int:request_id>/status", methods=["PATCH"])
-@jwt_required()
+@admin_required
 def update_status(request_id):
     data      = request.get_json()
     new_status = data.get("status")

@@ -74,26 +74,19 @@ async function doSignup() {
   btn.disabled = true;
   btn.textContent = 'Creating account…';
   try {
+    // The server creates the donor record from these details and assigns the role itself
     await apiFetch('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, phone, role: 'staff' })
+      body: JSON.stringify({
+        name, email, password, phone, blood_type: blood,
+        date_of_birth: dob || null, address: address || null
+      })
     });
 
     const loginData = await apiFetch('/auth/login', {
       method: 'POST', body: JSON.stringify({ email, password })
     });
     saveToken(loginData.access_token);
-
-    try {
-      await apiFetch('/donors/', {
-        method: 'POST',
-        body: JSON.stringify({
-          name, blood_type: blood, phone,
-          email, date_of_birth: dob || null,
-          address: address || null
-        })
-      });
-    } catch (_) {}
 
     const me = await apiFetch('/auth/me');
     enterApp(me, blood);

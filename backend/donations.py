@@ -2,7 +2,7 @@ from datetime import date
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from db import get_db, BLOOD_TYPES
-from auth import current_user
+from auth import current_user, admin_required
 from notifications import notify, notify_admins
 
 # What the donor is told when an admin changes their offer's status
@@ -172,7 +172,7 @@ def edit_donation(donation_id):
 
 
 @donations_bp.route("/<int:donation_id>/status", methods=["PATCH"])
-@jwt_required()
+@admin_required
 def update_donation_status(donation_id):
     data   = request.get_json()
     status = data.get("status")

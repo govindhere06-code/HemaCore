@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from db import get_db
+from auth import admin_required
 from notifications import check_low_stock
 
 inventory_bp = Blueprint("inventory", __name__)
@@ -33,7 +34,7 @@ def get_inventory(blood_type):
         db.close()
 
 @inventory_bp.route("/add", methods=["POST"])
-@jwt_required()
+@admin_required
 def add_units():
     data       = request.get_json()
     blood_type = data.get("blood_type")
@@ -59,7 +60,7 @@ def add_units():
         db.close()
 
 @inventory_bp.route("/deduct", methods=["POST"])
-@jwt_required()
+@admin_required
 def deduct_units():
     data       = request.get_json()
     blood_type = data.get("blood_type")
