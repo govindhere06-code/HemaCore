@@ -385,7 +385,15 @@ async function submitInventory() {
     toast(`${units} units ${op === 'add' ? 'added' : 'deducted'} for ${blood_type}`, 'success');
     closeModal('modal-inventory');
     loadInventory();
+    refreshNotificationsSoon();
   } catch (e) { toast(e.message, 'error'); }
+}
+
+// A stock change can raise a low-stock alert, so check the bell now instead of waiting
+// for the next 30-second poll. The short delay lets the confirmation message be seen
+// before the alert pop-up replaces it.
+function refreshNotificationsSoon() {
+  setTimeout(loadNotifications, 1200);
 }
 
 // ── REQUESTS ──────────────────────────────────────────
@@ -434,6 +442,7 @@ async function updateStatus(id, status) {
       rejected:  'Request rejected — inventory restored',
     };
     toast(msgs[status] || `Request marked as ${status}`, 'success');
+    refreshNotificationsSoon();
     const [reqs, inv] = await Promise.all([apiFetch('/requests/'), apiFetch('/inventory/')]);
     allRequests = reqs;
     applyRequestFilters();
