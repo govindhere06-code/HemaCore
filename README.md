@@ -22,6 +22,7 @@ frontend/   Admin and user portals (HTML, CSS, JavaScript)
 | `notifications.py` | In-app notifications (status updates, new requests/offers, low-stock alerts) |
 | `schema.sql` | Database tables |
 | `create_admin.py` | Creates the first admin account |
+| `fix_duplicate_donors.py` | One-time fix for databases created before donor emails were unique: merges duplicate donors and adds the unique rule |
 
 | Frontend file | Purpose |
 |---|---|

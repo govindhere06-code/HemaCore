@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS donors (
     name               VARCHAR(100)                           NOT NULL,
     blood_type         ENUM('A+','A-','B+','B-','AB+','AB-','O+','O-') NOT NULL,
     phone              VARCHAR(20)                            NOT NULL,
-    email              VARCHAR(150),
+    email              VARCHAR(150) UNIQUE,                   -- one donor record per person
     date_of_birth      DATE,
     address            TEXT,
     last_donation_date DATE,

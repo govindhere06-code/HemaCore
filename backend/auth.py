@@ -62,8 +62,10 @@ def register():
             (name, email, hashed, SIGNUP_ROLE, phone),
         )
         # The new user's donor record is created here, in the same transaction,
-        # because adding donors through /api/donors is admin-only
-        if blood and phone:
+        # because adding donors through /api/donors is admin-only. If staff already
+        # registered this person as a donor, that record is kept (one per email).
+        cur.execute("SELECT id FROM donors WHERE email = %s", (email,))
+        if blood and phone and not cur.fetchone():
             cur.execute(
                 """INSERT INTO donors (name, blood_type, phone, email, date_of_birth, address)
                    VALUES (%s, %s, %s, %s, %s, %s)""",

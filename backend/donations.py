@@ -18,6 +18,7 @@ STATUS_NOTICES = {
 donations_bp = Blueprint("donations", __name__)
 
 VALID_STATUSES = ("pending", "approved", "rejected", "completed")
+RECEIVED = ("approved", "completed")   # statuses where the donated units are counted in stock
 
 # Offer rows plus the offering user's contact details
 OFFER_SELECT = """
@@ -197,18 +198,28 @@ def update_donation_status(donation_id):
         cur2 = db.cursor()
         cur2.execute("UPDATE donation_offers SET status = %s WHERE id = %s", (status, donation_id))
 
-        # If approved → add donor to donors table (if not already) and increment inventory
-        if status == "approved":
-            # Upsert donor record using user info
-            cur2.execute(
-                """INSERT INTO donors (name, blood_type, phone, email, last_donation_date)
-                   SELECT u.name, %s, COALESCE(u.phone,'N/A'), u.email, CURDATE()
-                   FROM users u WHERE u.id = %s
-                   ON DUPLICATE KEY UPDATE
-                     blood_type = VALUES(blood_type),
-                     last_donation_date = VALUES(last_donation_date)""",
-                (offer["blood_type"], offer["user_id"]),
-            )
+        # When an offer is accepted for the first time: record the donation on the person's
+        # donor record and add the units to stock. Re-approving must not add them again.
+        already_received = offer["status"] in RECEIVED
+        if status in RECEIVED and not already_received:
+            cur.execute("SELECT name, email, phone FROM users WHERE id = %s", (offer["user_id"],))
+            user = cur.fetchone()
+            donated_on = offer["preferred_date"] or date.today()
+            # donors.email is unique (and case-insensitive), so this finds their one record
+            cur.execute("SELECT id FROM donors WHERE email = %s", (user["email"],))
+            donor = cur.fetchone()
+            if donor:
+                cur2.execute(
+                    """UPDATE donors SET last_donation_date = GREATEST(COALESCE(last_donation_date, %s), %s)
+                       WHERE id = %s""",
+                    (donated_on, donated_on, donor["id"]),
+                )
+            else:
+                cur2.execute(
+                    """INSERT INTO donors (name, blood_type, phone, email, last_donation_date)
+                       VALUES (%s, %s, %s, %s, %s)""",
+                    (user["name"], offer["blood_type"], user["phone"] or "N/A", user["email"], donated_on),
+                )
             # Add units to inventory
             cur2.execute(
                 """INSERT INTO blood_inventory (blood_type, units_available)

@@ -1,8 +1,16 @@
 from flask import Blueprint, request, jsonify
+from mysql.connector import IntegrityError
 from db import get_db
 from auth import admin_required
 
 donors_bp = Blueprint("donors", __name__)
+
+DUPLICATE_ENTRY = 1062   # MySQL error for breaking a UNIQUE rule (here: donor email)
+
+
+def clean_email(value):
+    """Blank emails are stored as NULL (no email), so they never clash with the unique rule."""
+    return (value or "").strip().lower() or None
 
 @donors_bp.route("/", methods=["GET"])
 @admin_required
@@ -49,11 +57,16 @@ def create_donor():
             """INSERT INTO donors (name, blood_type, phone, email, date_of_birth, address, last_donation_date)
                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
             (data["name"], data["blood_type"], data["phone"],
-             data.get("email"), data.get("date_of_birth"),
+             clean_email(data.get("email")), data.get("date_of_birth"),
              data.get("address"), data.get("last_donation_date")),
         )
         db.commit()
         return jsonify({"message": "Donor created", "id": cur.lastrowid}), 201
+    except IntegrityError as e:
+        db.rollback()
+        if e.errno == DUPLICATE_ENTRY:
+            return jsonify({"error": "A donor with this email is already registered"}), 409
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.rollback()
         return jsonify({"error": str(e)}), 400
@@ -67,6 +80,8 @@ def update_donor(donor_id):
     data = request.get_json()
     fields = ["name", "blood_type", "phone", "email", "date_of_birth", "address", "last_donation_date"]
     updates = {f: data[f] for f in fields if f in data}
+    if "email" in updates:
+        updates["email"] = clean_email(updates["email"])
     if not updates:
         return jsonify({"error": "No fields to update"}), 400
     set_clause = ", ".join(f"{k} = %s" for k in updates)
@@ -78,6 +93,11 @@ def update_donor(donor_id):
         if cur.rowcount == 0:
             return jsonify({"error": "Donor not found"}), 404
         return jsonify({"message": "Donor updated"}), 200
+    except IntegrityError as e:
+        db.rollback()
+        if e.errno == DUPLICATE_ENTRY:
+            return jsonify({"error": "A donor with this email is already registered"}), 409
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.rollback()
         return jsonify({"error": str(e)}), 400
