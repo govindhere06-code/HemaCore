@@ -1,6 +1,8 @@
 import mysql.connector
 import os
 
+BLOOD_TYPES = ("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
+
 def get_db():
     return mysql.connector.connect(
         host=os.getenv("DB_HOST", "127.0.0.1"),

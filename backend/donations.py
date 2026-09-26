@@ -1,10 +1,18 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from db import get_db
+from db import get_db, BLOOD_TYPES
+from auth import current_user
 
 donations_bp = Blueprint("donations", __name__)
 
 VALID_STATUSES = ("pending", "approved", "rejected", "completed")
+
+# Offer rows plus the offering user's contact details
+OFFER_SELECT = """
+    SELECT d.*, u.name AS user_name, u.email AS user_email, u.phone AS user_phone
+    FROM donation_offers d
+    LEFT JOIN users u ON u.id = d.user_id
+"""
 
 
 @donations_bp.route("/", methods=["GET"])
@@ -16,18 +24,18 @@ def list_donations():
     db  = get_db()
     cur = db.cursor(dictionary=True)
     try:
-        query  = "SELECT * FROM donation_offers"
+        query  = OFFER_SELECT
         params = []
         conditions = []
         if status:
-            conditions.append("status = %s")
+            conditions.append("d.status = %s")
             params.append(status)
         if user_id:
-            conditions.append("user_id = %s")
+            conditions.append("d.user_id = %s")
             params.append(user_id)
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
-        query += " ORDER BY created_at DESC"
+        query += " ORDER BY d.created_at DESC"
         cur.execute(query, params)
         return jsonify(cur.fetchall()), 200
     finally:
@@ -41,7 +49,7 @@ def get_donation(donation_id):
     db  = get_db()
     cur = db.cursor(dictionary=True)
     try:
-        cur.execute("SELECT * FROM donation_offers WHERE id = %s", (donation_id,))
+        cur.execute(OFFER_SELECT + " WHERE d.id = %s", (donation_id,))
         record = cur.fetchone()
         if not record:
             return jsonify({"error": "Donation offer not found"}), 404
@@ -78,6 +86,60 @@ def create_donation():
         )
         db.commit()
         return jsonify({"message": "Donation offer submitted", "id": cur.lastrowid}), 201
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": str(e)}), 400
+    finally:
+        cur.close()
+        db.close()
+
+
+def owner_check(offer, user):
+    """Non-admins may only change their own offers, and only while pending."""
+    if user["role"] == "admin":
+        return None
+    if str(offer["user_id"]) != str(user["id"]):
+        return jsonify({"error": "You can only change your own donation offers"}), 403
+    if offer["status"] != "pending":
+        return jsonify({"error": f"This offer is already {offer['status']} and can no longer be changed"}), 409
+    return None
+
+
+@donations_bp.route("/<int:donation_id>", methods=["PUT"])
+@jwt_required()
+def edit_donation(donation_id):
+    data      = request.get_json()
+    blood     = data.get("blood_type")
+    units     = data.get("units")
+    pref_date = data.get("preferred_date")
+    pref_time = (data.get("preferred_time") or "").strip()
+    notes     = (data.get("notes") or "").strip()
+    if blood not in BLOOD_TYPES or not isinstance(units, int) or units <= 0 or not pref_date or not pref_time:
+        return jsonify({"error": "A valid blood type, positive units, preferred date and time are required"}), 400
+
+    user = current_user()
+    db  = get_db()
+    cur = db.cursor(dictionary=True)
+    try:
+        cur.execute("SELECT * FROM donation_offers WHERE id = %s", (donation_id,))
+        offer = cur.fetchone()
+        if not offer:
+            return jsonify({"error": "Donation offer not found"}), 404
+        denied = owner_check(offer, user)
+        if denied:
+            return denied
+        # Approval already added the units to stock, so only the schedule can change after that
+        if offer["status"] not in ("pending", "approved"):
+            return jsonify({"error": f"A {offer['status']} offer can no longer be edited"}), 409
+        if offer["status"] == "approved" and (blood != offer["blood_type"] or units != offer["units"]):
+            return jsonify({"error": "Blood type and units can't change after approval — only the schedule and notes"}), 409
+        cur.execute(
+            """UPDATE donation_offers SET blood_type = %s, units = %s, preferred_date = %s,
+               preferred_time = %s, notes = %s WHERE id = %s""",
+            (blood, units, pref_date, pref_time, notes, donation_id),
+        )
+        db.commit()
+        return jsonify({"message": "Donation offer updated"}), 200
     except Exception as e:
         db.rollback()
         return jsonify({"error": str(e)}), 400
@@ -139,9 +201,17 @@ def update_donation_status(donation_id):
 @donations_bp.route("/<int:donation_id>", methods=["DELETE"])
 @jwt_required()
 def delete_donation(donation_id):
+    user = current_user()
     db  = get_db()
-    cur = db.cursor()
+    cur = db.cursor(dictionary=True)
     try:
+        cur.execute("SELECT * FROM donation_offers WHERE id = %s", (donation_id,))
+        offer = cur.fetchone()
+        if not offer:
+            return jsonify({"error": "Donation offer not found"}), 404
+        denied = owner_check(offer, user)
+        if denied:
+            return denied
         cur.execute("DELETE FROM donation_offers WHERE id = %s", (donation_id,))
         db.commit()
         if cur.rowcount == 0:

@@ -1,10 +1,18 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from db import get_db
+from db import get_db, BLOOD_TYPES
+from auth import current_user
 
 requests_bp = Blueprint("requests", __name__)
 
 VALID_STATUSES = ("pending", "approved", "fulfilled", "rejected")
+
+# Request rows plus the requesting user's contact details
+REQUEST_SELECT = """
+    SELECT r.*, u.name AS requester_name, u.email AS requester_email, u.phone AS requester_phone
+    FROM blood_requests r
+    LEFT JOIN users u ON u.id = r.created_by
+"""
 
 
 @requests_bp.route("/", methods=["GET"])
@@ -15,9 +23,9 @@ def list_requests():
     cur = db.cursor(dictionary=True)
     try:
         if status:
-            cur.execute("SELECT * FROM blood_requests WHERE status = %s ORDER BY created_at DESC", (status,))
+            cur.execute(REQUEST_SELECT + " WHERE r.status = %s ORDER BY r.created_at DESC", (status,))
         else:
-            cur.execute("SELECT * FROM blood_requests ORDER BY created_at DESC")
+            cur.execute(REQUEST_SELECT + " ORDER BY r.created_at DESC")
         return jsonify(cur.fetchall()), 200
     finally:
         cur.close()
@@ -30,7 +38,7 @@ def get_request(request_id):
     db  = get_db()
     cur = db.cursor(dictionary=True)
     try:
-        cur.execute("SELECT * FROM blood_requests WHERE id = %s", (request_id,))
+        cur.execute(REQUEST_SELECT + " WHERE r.id = %s", (request_id,))
         req = cur.fetchone()
         if not req:
             return jsonify({"error": "Request not found"}), 404
@@ -62,6 +70,56 @@ def create_request():
         )
         db.commit()
         return jsonify({"message": "Request submitted", "id": cur.lastrowid}), 201
+    except Exception as e:
+        db.rollback()
+        return jsonify({"error": str(e)}), 400
+    finally:
+        cur.close()
+        db.close()
+
+
+def owner_check(req, user):
+    """Non-admins may only change their own requests, and only while pending."""
+    if user["role"] == "admin":
+        return None
+    if str(req["created_by"]) != str(user["id"]):
+        return jsonify({"error": "You can only change your own requests"}), 403
+    if req["status"] != "pending":
+        return jsonify({"error": f"This request is already {req['status']} and can no longer be changed"}), 409
+    return None
+
+
+@requests_bp.route("/<int:request_id>", methods=["PUT"])
+@jwt_required()
+def edit_request(request_id):
+    data     = request.get_json()
+    patient  = (data.get("patient_name") or "").strip()
+    hospital = (data.get("hospital") or "").strip()
+    blood    = data.get("blood_type")
+    units    = data.get("units")
+    if not patient or not hospital or blood not in BLOOD_TYPES or not isinstance(units, int) or units <= 0:
+        return jsonify({"error": "Patient, hospital, a valid blood type and positive units are required"}), 400
+
+    user = current_user()
+    db  = get_db()
+    cur = db.cursor(dictionary=True)
+    try:
+        cur.execute("SELECT * FROM blood_requests WHERE id = %s", (request_id,))
+        req = cur.fetchone()
+        if not req:
+            return jsonify({"error": "Request not found"}), 404
+        denied = owner_check(req, user)
+        if denied:
+            return denied
+        # Stock was already deducted for approved/fulfilled requests, so only pending ones are editable
+        if req["status"] != "pending":
+            return jsonify({"error": "Only pending requests can be edited"}), 409
+        cur.execute(
+            "UPDATE blood_requests SET patient_name = %s, hospital = %s, blood_type = %s, units = %s WHERE id = %s",
+            (patient, hospital, blood, units, request_id),
+        )
+        db.commit()
+        return jsonify({"message": "Request updated"}), 200
     except Exception as e:
         db.rollback()
         return jsonify({"error": str(e)}), 400
@@ -154,6 +212,7 @@ def update_status(request_id):
 @requests_bp.route("/<int:request_id>", methods=["DELETE"])
 @jwt_required()
 def delete_request(request_id):
+    user = current_user()
     db  = get_db()
     cur = db.cursor(dictionary=True)
     try:
@@ -162,6 +221,9 @@ def delete_request(request_id):
         req = cur.fetchone()
         if not req:
             return jsonify({"error": "Request not found"}), 404
+        denied = owner_check(req, user)
+        if denied:
+            return denied
 
         if req["status"] in ("approved", "fulfilled"):
             cur2 = db.cursor()

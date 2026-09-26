@@ -117,6 +117,34 @@ tbody tr:hover{background:rgba(255,255,255,0.03)}
 .search-bar:focus-within{border-color:var(--border-hi)}
 .search-bar input{background:none;border:none;outline:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;width:200px;padding:0}
 .search-bar input::placeholder{color:var(--text-dim)}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 24px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.01)}
+.toolbar .select-field{width:auto;padding:7px 12px;font-size:13px}
+.toolbar input[type=date]{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;padding:6px 10px;outline:none;color-scheme:dark}
+.toolbar input[type=date]:focus{border-color:var(--border-hi)}
+.toolbar-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+.result-count{margin-left:auto;font-size:12px;color:var(--text-muted);white-space:nowrap}
+.inv-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px}
+.inv-toolbar .select-field{width:auto;padding:7px 12px;font-size:13px}
+.cell-sub{display:block;font-size:12px;color:var(--text-muted);font-weight:400;margin-top:2px}
+.badge-eligible{background:rgba(29,184,119,0.12);color:#1db877;border:1px solid rgba(29,184,119,0.25)}
+.badge-waiting{background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid rgba(255,255,255,0.1)}
+.modal.wide{width:600px;max-height:88vh;overflow-y:auto}
+.detail-head{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+.detail-blood{width:56px;height:56px;border-radius:14px;background:rgba(192,21,42,0.15);border:1px solid rgba(192,21,42,0.3);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:22px;color:var(--blood);flex-shrink:0}
+.detail-head h3{margin-bottom:4px}
+.detail-head .badge{margin-right:6px}
+.detail-list{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;padding:18px 0;border-top:1px solid var(--border)}
+.detail-list .full{grid-column:1/-1}
+.detail-label{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.detail-value{font-size:14px;word-break:break-word}
+.detail-section{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;padding-top:18px;border-top:1px solid var(--border);margin-bottom:10px}
+.mini-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}
+.mini-row:last-child{border-bottom:none}
+.mini-row .badge{margin-left:auto}
+.note-box{padding:12px 14px;border-radius:10px;font-size:13px;margin-top:6px}
+.note-box.ok{background:rgba(29,184,119,0.08);border:1px solid rgba(29,184,119,0.2);color:#1db877}
+.note-box.warn{background:rgba(232,160,32,0.08);border:1px solid rgba(232,160,32,0.2);color:var(--amber)}
+.note-box.bad{background:rgba(192,21,42,0.08);border:1px solid rgba(192,21,42,0.25);color:#ff6b7a}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:50;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
 .modal-overlay.open{opacity:1;pointer-events:all}
 .modal{background:var(--bg2);border:1px solid var(--border-hi);border-radius:var(--radius-lg);padding:36px;width:480px;max-width:95vw;transform:scale(.95) translateY(10px);transition:transform .25s}
@@ -128,10 +156,32 @@ tbody tr:hover{background:rgba(255,255,255,0.03)}
 .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
 .select-field{width:100%;padding:11px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Outfit',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
 .select-field:focus{border-color:var(--blood);box-shadow:0 0 0 3px rgba(192,21,42,.1)}
+.select-field:disabled,.field input:disabled{opacity:.45;cursor:not-allowed}
+.field input[type=date]{color-scheme:dark}
 .btn-ghost{padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:var(--text-muted);border:1px solid var(--border);font-family:'Outfit',sans-serif;transition:all .15s}
 .btn-ghost:hover{color:var(--text);border-color:var(--border-hi)}
 .btn-submit{padding:10px 22px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--blood);color:#fff;border:none;font-family:'Outfit',sans-serif;transition:background .2s}
 .btn-submit:hover{background:#d41830}
+.dash-row{display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:24px}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.panel-body{padding:18px 24px}
+.stock-row{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:12px;margin-bottom:12px}
+.stock-row:last-child{margin-bottom:0}
+.stock-type{font-family:'DM Serif Display',serif;font-size:18px;color:var(--blood)}
+.stock-track{height:10px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.stock-fill{height:100%;border-radius:99px;transition:width .6s ease}
+.stock-fill.ok{background:var(--green)}.stock-fill.low{background:var(--amber)}.stock-fill.critical{background:var(--blood)}
+.stock-num{font-family:'DM Mono',monospace;font-size:13px;text-align:right;color:var(--text-muted)}
+.attn-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px}
+.attn-item:last-child{border-bottom:none}
+.attn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.attn-dot.red{background:var(--blood)}.attn-dot.amber{background:var(--amber)}.attn-dot.green{background:var(--green)}
+.attn-item .action-btn{margin-left:auto;margin-right:0;white-space:nowrap}
+.status-split{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--bg3);margin:4px 0 12px}
+.status-split div{height:100%}
+.status-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--text-muted)}
+@media (max-width:900px){.dash-row{grid-template-columns:1fr}}
+.status-legend span::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--c)}
 .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
 .empty-state p{font-size:14px}
 #toast{position:fixed;bottom:28px;right:28px;background:var(--bg2);border:1px solid var(--border-hi);border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:12px;font-size:14px;z-index:200;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);max-width:320px}
@@ -141,7 +191,7 @@ tbody tr:hover{background:rgba(255,255,255,0.03)}
 #toast.error .toast-dot{background:var(--blood)}
 </style>
 </head>
-<body>
+<body data-portal="admin">
 
 <div id="login-screen">
   <div class="login-wrap">
@@ -232,6 +282,21 @@ tbody tr:hover{background:rgba(255,255,255,0.03)}
         <div class="stat-card amber"><div class="accent-line"></div><div class="stat-label">Pending</div><div class="stat-value" id="stat-pending">—</div><div class="stat-sub">Awaiting approval</div></div>
         <div class="stat-card blue"><div class="accent-line"></div><div class="stat-label">Fulfilled</div><div class="stat-value" id="stat-fulfilled">—</div><div class="stat-sub">Completed requests</div></div>
       </div>
+      <div class="dash-row">
+        <div class="panel">
+          <div class="table-header"><span class="table-title">Stock by Blood Type</span><span class="table-meta" id="stock-meta"></span></div>
+          <div class="panel-body" id="stock-chart"></div>
+        </div>
+        <div class="panel">
+          <div class="table-header"><span class="table-title">Needs Attention</span></div>
+          <div class="panel-body" id="attention-list"></div>
+          <div class="panel-body" style="border-top:1px solid var(--border)">
+            <div class="stat-label" style="margin-bottom:6px">Requests by Status</div>
+            <div class="status-split" id="status-split"></div>
+            <div class="status-legend" id="status-legend"></div>
+          </div>
+        </div>
+      </div>
       <div class="table-card">
         <div class="table-header"><span class="table-title">Recent Requests</span><span class="table-meta" id="recent-meta"></span></div>
         <table><thead><tr><th>Patient</th><th>Blood Type</th><th>Units</th><th>Hospital</th><th>Status</th><th>Date</th></tr></thead>
@@ -244,15 +309,41 @@ tbody tr:hover{background:rgba(255,255,255,0.03)}
       <div class="table-card">
         <div class="table-header">
           <span class="table-title">All Donors</span>
-          <div class="search-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" placeholder="Search donors…" oninput="filterDonors(this.value)"/></div>
         </div>
-        <table><thead><tr><th>Name</th><th>Blood Type</th><th>Phone</th><th>Last Donation</th><th>Actions</th></tr></thead>
+        <div class="toolbar">
+          <div class="search-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="f-donor-q" placeholder="Name, phone, email, city…" oninput="applyDonorFilters()"/></div>
+          <select class="select-field" id="f-donor-blood" onchange="applyDonorFilters()">
+            <option value="">All blood types</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+          </select>
+          <select class="select-field" id="f-donor-elig" onchange="applyDonorFilters()">
+            <option value="">Any eligibility</option>
+            <option value="yes">Eligible to donate now</option>
+            <option value="no">Not yet eligible</option>
+          </select>
+          <button class="action-btn" onclick="clearFilters('donor')">Clear</button>
+          <span class="result-count" id="donor-count"></span>
+        </div>
+        <table><thead><tr><th>Name</th><th>Blood Type</th><th>Phone</th><th>Last Donation</th><th>Eligibility</th><th>Actions</th></tr></thead>
         <tbody id="donors-body"></tbody></table>
       </div>
     </div>
 
     <!-- INVENTORY -->
     <div class="page" id="page-inventory">
+      <div class="inv-toolbar">
+        <select class="select-field" id="f-inv-level" onchange="renderInventory()">
+          <option value="">All stock levels</option>
+          <option value="ok">Healthy (above 10 units)</option>
+          <option value="low">Low (1–10 units)</option>
+          <option value="critical">Out of stock</option>
+        </select>
+        <select class="select-field" id="f-inv-sort" onchange="renderInventory()">
+          <option value="">Sort by blood type</option>
+          <option value="desc">Most units first</option>
+          <option value="asc">Fewest units first</option>
+        </select>
+        <span class="result-count" id="inv-count"></span>
+      </div>
       <div class="inventory-grid" id="inventory-grid"></div>
     </div>
 
@@ -261,15 +352,25 @@ tbody tr:hover{background:rgba(255,255,255,0.03)}
       <div class="table-card">
         <div class="table-header">
           <span class="table-title">All Blood Requests</span>
-          <select class="select-field" style="width:140px;padding:7px 12px;font-size:13px" onchange="filterRequests(this.value)">
-            <option value="">All Status</option>
+        </div>
+        <div class="toolbar">
+          <div class="search-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="f-req-q" placeholder="Patient, hospital, requester…" oninput="applyRequestFilters()"/></div>
+          <select class="select-field" id="f-req-blood" onchange="applyRequestFilters()">
+            <option value="">All blood types</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+          </select>
+          <select class="select-field" id="f-req-status" onchange="applyRequestFilters()">
+            <option value="">All status</option>
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="fulfilled">Fulfilled</option>
             <option value="rejected">Rejected</option>
           </select>
+          <span class="toolbar-label">From</span><input type="date" id="f-req-from" onchange="applyRequestFilters()"/>
+          <span class="toolbar-label">To</span><input type="date" id="f-req-to" onchange="applyRequestFilters()"/>
+          <button class="action-btn" onclick="clearFilters('req')">Clear</button>
+          <span class="result-count" id="req-count"></span>
         </div>
-        <table><thead><tr><th>Patient</th><th>Blood Type</th><th>Units</th><th>Hospital</th><th>Status</th><th>Actions</th></tr></thead>
+        <table><thead><tr><th>Patient</th><th>Blood Type</th><th>Units</th><th>Hospital</th><th>Requested</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="requests-body"></tbody></table>
       </div>
     </div>
@@ -279,13 +380,23 @@ tbody tr:hover{background:rgba(255,255,255,0.03)}
       <div class="table-card">
         <div class="table-header">
           <span class="table-title">Donation Offers</span>
-          <select class="select-field" style="width:160px;padding:7px 12px;font-size:13px" onchange="filterDonations(this.value)">
-            <option value="">All Status</option>
+        </div>
+        <div class="toolbar">
+          <div class="search-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="f-don-q" placeholder="Donor, email, notes…" oninput="applyDonationFilters()"/></div>
+          <select class="select-field" id="f-don-blood" onchange="applyDonationFilters()">
+            <option value="">All blood types</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+          </select>
+          <select class="select-field" id="f-don-status" onchange="applyDonationFilters()">
+            <option value="">All status</option>
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="completed">Completed</option>
             <option value="rejected">Rejected</option>
           </select>
+          <span class="toolbar-label">Preferred date from</span><input type="date" id="f-don-from" onchange="applyDonationFilters()"/>
+          <span class="toolbar-label">To</span><input type="date" id="f-don-to" onchange="applyDonationFilters()"/>
+          <button class="action-btn" onclick="clearFilters('don')">Clear</button>
+          <span class="result-count" id="don-count"></span>
         </div>
         <table><thead><tr><th>Donor</th><th>Blood Type</th><th>Units</th><th>Date & Time</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="donations-body"></tbody></table>
@@ -295,9 +406,16 @@ tbody tr:hover{background:rgba(255,255,255,0.03)}
 </div>
 
 <!-- MODALS -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal wide">
+    <div id="detail-content"></div>
+    <div class="modal-footer"><button class="btn-ghost" onclick="closeModal('modal-detail')">Close</button></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-donor">
   <div class="modal">
-    <h3>Register Donor</h3><p>Add a new blood donor to the system</p>
+    <h3 id="donor-modal-title">Register Donor</h3><p id="donor-modal-sub">Add a new blood donor to the system</p>
     <div class="modal-grid">
       <div class="field full"><label>Full Name</label><input type="text" id="d-name" placeholder="John Doe"/></div>
       <div class="field"><label>Blood Type</label><select class="select-field" id="d-blood"><option value="">Select…</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
@@ -307,7 +425,37 @@ tbody tr:hover{background:rgba(255,255,255,0.03)}
       <div class="field full"><label>Address</label><input type="text" id="d-address" placeholder="optional"/></div>
       <div class="field full"><label>Last Donation Date</label><input type="date" id="d-lastdon"/></div>
     </div>
-    <div class="modal-footer"><button class="btn-ghost" onclick="closeModal('modal-donor')">Cancel</button><button class="btn-submit" onclick="submitDonor()">Register</button></div>
+    <div class="modal-footer"><button class="btn-ghost" onclick="closeModal('modal-donor')">Cancel</button><button class="btn-submit" id="donor-modal-btn" onclick="submitDonor()">Register</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-request">
+  <div class="modal">
+    <h3>Edit Request</h3><p>Only pending requests can be edited — stock is deducted on approval.</p>
+    <div class="modal-grid">
+      <div class="field full"><label>Patient Name</label><input type="text" id="er-patient"/></div>
+      <div class="field full"><label>Hospital</label><input type="text" id="er-hospital"/></div>
+      <div class="field"><label>Blood Type</label><select class="select-field" id="er-blood"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+      <div class="field"><label>Units</label><input type="number" id="er-units" min="1"/></div>
+    </div>
+    <div class="modal-footer"><button class="btn-ghost" onclick="closeModal('modal-edit-request')">Cancel</button><button class="btn-submit" onclick="submitRequestEdit()">Save Changes</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-donation">
+  <div class="modal">
+    <h3>Edit Donation Offer</h3><p id="ed-sub">Change the offer details or reschedule it.</p>
+    <div class="modal-grid">
+      <div class="field"><label>Blood Type</label><select class="select-field" id="ed-blood"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+      <div class="field"><label>Units</label><input type="number" id="ed-units" min="1" max="2"/></div>
+      <div class="field"><label>Preferred Date</label><input type="date" id="ed-date" style="color-scheme:dark"/></div>
+      <div class="field"><label>Preferred Time</label><select class="select-field" id="ed-time">
+        <option>9:00 AM – 10:00 AM</option><option>10:00 AM – 11:00 AM</option><option>11:00 AM – 12:00 PM</option>
+        <option>2:00 PM – 3:00 PM</option><option>3:00 PM – 4:00 PM</option><option>4:00 PM – 5:00 PM</option>
+      </select></div>
+      <div class="field full"><label>Notes</label><input type="text" id="ed-notes"/></div>
+    </div>
+    <div class="modal-footer"><button class="btn-ghost" onclick="closeModal('modal-edit-donation')">Cancel</button><button class="btn-submit" onclick="submitDonationEdit()">Save Changes</button></div>
   </div>
 </div>
 
@@ -323,7 +471,7 @@ tbody tr:hover{background:rgba(255,255,255,0.03)}
   </div>
 </div>
 
-<script src="api.js"></script>
-<script src="admin.js"></script>
+<script src="api.js?v=10"></script>
+<script src="admin.js?v=10"></script>
 </body>
 </html>
