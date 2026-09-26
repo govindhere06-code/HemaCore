@@ -5,7 +5,7 @@ let allInventory = [];
 
 const LOW_STOCK = 10;   // units at or below this count as low
 const STATUS_COLORS = {
-  pending: '#e8a020', approved: '#1db877', fulfilled: '#60a5fa', rejected: '#ff6b7a', completed: '#a78bfa',
+  pending: 'var(--amber-text)', approved: 'var(--green-text)', fulfilled: 'var(--blue-text)', rejected: 'var(--danger-text)', completed: 'var(--purple-text)',
 };
 
 const DONATION_GAP_DAYS = 56;
@@ -209,7 +209,7 @@ function renderAttention(inv, reqs, donations) {
       return !stock || stock.units_available < r.units;
     }).length;
     items.push({ dot: 'amber', text: `${pendingReqs.length} request${pendingReqs.length > 1 ? 's' : ''} awaiting approval`
-      + (short ? ` <span style="color:#ff6b7a">(${short} can't be met from stock)</span>` : ''), page: 'requests', btn: 'Review' });
+      + (short ? ` <span style="color:var(--danger-text)">(${short} can't be met from stock)</span>` : ''), page: 'requests', btn: 'Review' });
   }
   const pendingDon = donations.filter(d => d.status === 'pending').length;
   if (pendingDon)
@@ -634,7 +634,7 @@ function viewDonation(id) {
     <div class="detail-section">Donor Record</div>
     ${donor
       ? `<div class="detail-list" style="border-top:none;padding-top:0">
-          ${detailItem('Registered Blood Type', donor.blood_type + (donor.blood_type !== o.blood_type ? ' <span style="color:#ff6b7a">(differs from offer)</span>' : ''))}
+          ${detailItem('Registered Blood Type', donor.blood_type + (donor.blood_type !== o.blood_type ? ' <span style="color:var(--danger-text)">(differs from offer)</span>' : ''))}
           ${detailItem('Last Donation', donor.last_donation_date ? fmtDate(donor.last_donation_date) : 'Never donated')}
           ${detailItem('Eligibility', eligibilityBadge(donor))}
           ${detailItem('Age', donor.date_of_birth ? ageFrom(donor.date_of_birth) + ' yrs' : '')}

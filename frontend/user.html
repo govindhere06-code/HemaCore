@@ -4,20 +4,41 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>HemaCore — User Portal</title>
+<script>(function(){var t='light';try{t=localStorage.getItem('hemacoreTheme')||t;}catch(e){}document.documentElement.dataset.theme=t;})();</script>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&family=DM+Mono:wght@300;400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
+/* Light is this portal's default theme; [data-theme="dark"] switches it */
 :root {
+  color-scheme:light;
   --rose:#e8304a; --rose-light:#ff6b7a; --rose-dim:rgba(232,48,74,0.12);
   --bg:#faf8f7; --bg2:#ffffff; --bg3:#f4f1f0; --bg4:#ede9e8;
   --border:rgba(0,0,0,0.07); --border-md:rgba(0,0,0,0.12);
   --text:#18100f; --text-muted:#7a6570; --text-dim:#b8aeb0;
-  --green:#0d9f5e; --amber:#c47c00; --blue:#3b82f6;
+  --green:#0d9f5e; --amber:#c47c00; --blue:#3b82f6; --purple:#7c3aed;
+  --hover:rgba(0,0,0,0.015);
   --radius:12px; --radius-lg:20px; --radius-xl:28px;
   --shadow:0 2px 16px rgba(0,0,0,0.06);
   --shadow-lg:0 12px 48px rgba(0,0,0,0.12);
 }
+:root[data-theme="dark"] {
+  color-scheme:dark;
+  --rose:#f0435b; --rose-dim:rgba(240,67,91,0.16);
+  --bg:#0f0d0e; --bg2:#1a1618; --bg3:#231e21; --bg4:#2c2629;
+  --border:rgba(255,255,255,0.08); --border-md:rgba(255,255,255,0.14);
+  --text:#f3ecea; --text-muted:#a8979c; --text-dim:#6b5d62;
+  --green:#22c07a; --amber:#e8a020; --blue:#60a5fa; --purple:#a78bfa;
+  --hover:rgba(255,255,255,0.03);
+  --shadow:0 2px 16px rgba(0,0,0,0.4);
+  --shadow-lg:0 12px 48px rgba(0,0,0,0.55);
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .25s,color .25s}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid var(--border-md);background:var(--bg2);color:var(--text-muted);cursor:pointer;transition:all .15s;flex-shrink:0}
+.theme-toggle:hover{color:var(--rose);border-color:var(--rose)}
+.theme-toggle.floating{position:fixed;top:20px;right:20px;z-index:150;box-shadow:var(--shadow)}
+/* The icon shows the theme a click switches to */
+:root[data-theme="dark"] .theme-toggle .icon-moon,
+:root[data-theme="light"] .theme-toggle .icon-sun{display:none}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border-md);border-radius:2px}
 #auth-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:100;transition:opacity .45s,transform .45s;background-image:radial-gradient(ellipse 60% 50% at 70% 20%, rgba(232,48,74,0.07) 0%, transparent 70%),radial-gradient(ellipse 40% 60% at 10% 80%, rgba(232,48,74,0.04) 0%, transparent 70%)}
 #auth-screen.hidden{opacity:0;pointer-events:none;transform:scale(1.02)}
@@ -105,7 +126,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .item-list{display:flex;flex-direction:column}
 .req-item{display:flex;align-items:center;gap:14px;padding:16px 24px;border-bottom:1px solid var(--border);transition:background .15s}
 .req-item:last-child{border-bottom:none}
-.req-item:hover{background:rgba(0,0,0,0.015)}
+.req-item:hover{background:var(--hover)}
 .req-blood{width:44px;height:44px;background:var(--rose-dim);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:16px;color:var(--rose);flex-shrink:0}
 .req-blood.green-bg{background:rgba(13,159,94,0.1);color:var(--green)}
 .req-info{flex:1}
@@ -119,7 +140,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .badge-approved{background:rgba(13,159,94,0.1);color:var(--green);border:1px solid rgba(13,159,94,0.2)}
 .badge-fulfilled{background:rgba(59,130,246,0.1);color:var(--blue);border:1px solid rgba(59,130,246,0.2)}
 .badge-rejected{background:rgba(232,48,74,0.1);color:var(--rose);border:1px solid rgba(232,48,74,0.2)}
-.badge-completed{background:rgba(139,92,246,0.1);color:#7c3aed;border:1px solid rgba(139,92,246,0.2)}
+.badge-completed{background:rgba(139,92,246,0.1);color:var(--purple);border:1px solid rgba(139,92,246,0.2)}
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
 .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow)}
 .stat-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
@@ -150,6 +171,13 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .mini-btn:hover{border-color:var(--text-muted);color:var(--text)}
 .mini-btn.danger:hover{border-color:var(--rose);color:var(--rose)}
 @media (max-width:640px){.form-row,.form-row.cols3{grid-template-columns:1fr}}
+@media (max-width:480px){
+  .header,.nav-bar{padding:0 16px}
+  .header-right{gap:8px}
+  .user-name-text{display:none}
+  .user-pill{padding:4px}
+  .nav-tab{padding:12px 10px}
+}
 .list-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--bg3)}
 .list-toolbar input,.list-toolbar select{padding:8px 12px;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;outline:none}
 .list-toolbar input:focus,.list-toolbar select:focus{border-color:var(--rose)}
@@ -168,6 +196,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <body data-portal="user">
 
 <div id="auth-screen">
+  <button class="theme-toggle floating" onclick="toggleTheme()" aria-label="Switch theme"></button>
   <div class="auth-card">
     <div class="auth-top">
       <div class="auth-logo">
@@ -224,6 +253,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
       <span class="header-logo-name">Hema<em>Core</em></span>
     </div>
     <div class="header-right">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Switch theme"></button>
       <div class="user-pill">
         <div class="user-avatar" id="user-avatar">U</div>
         <span class="user-name-text" id="user-name">User</span>
@@ -455,7 +485,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
   </div>
 </div>
 
-<script src="api.js?v=10"></script>
-<script src="user.js?v=10"></script>
+<script src="api.js?v=11"></script>
+<script src="user.js?v=11"></script>
 </body>
 </html>
